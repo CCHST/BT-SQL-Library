@@ -124,13 +124,12 @@
 			background: #fff;
 			border: 1px solid #e6e6e6;
 			border-radius: 12px;
-			padding: 1.2rem 1.4rem;
+			padding: 1.2rem 1.4rem 1.4rem 1.4rem;
 			box-shadow: 0 2px 6px rgba(0,0,0,0.05);
 			display: flex;
 			flex-direction: column;
-			justify-content: flex-start;
-			transition: transform .15s ease, box-shadow .15s ease;
 			height: 100%;
+			transition: transform .15s ease, box-shadow .15s ease;
 		}
 
 		.card:hover {
@@ -140,20 +139,19 @@
 
 		.card h3 {
 			color: #0072CE;
-			margin-top: 0;
-			margin-bottom: 0.75rem;
+			margin: 0 0 0.75rem 0;
 			font-size: 1.15rem;
 		}
 
-		.card p,
-		.card div {
-			line-height: 1.45;
-			margin-bottom: 0.7rem;
-			color: #333;
+		.card-body {
+			display: flex;
+			flex-direction: column;
+			gap: 1rem;
+			flex: 1;
 		}
 
 		.badges {
-			margin-bottom: 0.6rem;
+			margin: 0;
 		}
 
 		.badges span {
@@ -167,11 +165,13 @@
 			font-size: .75rem;
 		}
 
-		.description-block {
-			margin-bottom: 0.8rem;
+		.description-block,
+		.meta-line {
+			margin: 0;
 		}
+
 		.sql-details {
-			margin-top: 0.8rem;
+			margin-top: 1rem;
 		}
 
 		.sql-details summary,
@@ -233,15 +233,6 @@
 
 		.error-message {
 			color: #b91c1c;
-		}
-
-		.meta-line {
-			font-size: 0.95rem;
-		}
-
-		.small-note {
-			font-size: 0.85rem;
-			color: #666;
 		}
 	</style>
 </head>
@@ -473,7 +464,6 @@
 					)
 				)];
 				const tablesText = query.tables_used.length ? query.tables_used.join(', ') : 'N/A';
-
 				const allColumnsHtml = query.columns_used.length
 					? query.columns_used.map(col => `<span>${escapeHtml(col)}</span>`).join('')
 					: '<span>N/A</span>';
@@ -489,30 +479,32 @@
 				article.innerHTML = `
 					<h3>${escapeHtml(query.query_name)}</h3>
 
-					<p class="badges">
-						<span>${escapeHtml(query.category)}</span>
-						${tags.map(tag => `<span>${escapeHtml(tag)}</span>`).join('')}
-					</p>
+					<div class="card-body">
+						<p class="badges">
+							<span>${escapeHtml(query.category)}</span>
+							${tags.map(tag => `<span>${escapeHtml(tag)}</span>`).join('')}
+						</p>
 
-					<div class="description-block">
-						<p><strong>Description:</strong> ${escapeHtml(query.description)}</p>
+						<div class="description-block">
+							<p><strong>Description:</strong> ${escapeHtml(query.description)}</p>
+						</div>
+
+						<p class="meta-line"><strong>Tables:</strong> ${escapeHtml(tablesText)}</p>
+
+						<div class="meta-line">
+							<strong>Columns:</strong>
+							${query.columns_used.length > 0 ? `
+								<details class="columns-details" style="margin-top:0.2rem;">
+									<summary>View all columns (${query.columns_used.length})</summary>
+									<div class="column-badges">
+										${allColumnsHtml}
+									</div>
+								</details>
+							` : '<span>N/A</span>'}
+						</div>
+
+						<p class="meta-line"><strong>Server:</strong> ${escapeHtml(server)}</p>
 					</div>
-
-					<p class="meta-line"><strong>Tables:</strong> ${escapeHtml(tablesText)}</p>
-
-					<div class="meta-line">
-						<strong>Columns:</strong>
-						${query.columns_used.length > 0 ? `
-							<details class="columns-details" style="margin-top:0.2rem;">
-								<summary>View all columns (${query.columns_used.length})</summary>
-								<div class="column-badges">
-									${allColumnsHtml}
-								</div>
-							</details>
-						` : '<span>N/A</span>'}
-					</div>
-
-					<p class="meta-line"><strong>Server:</strong> ${escapeHtml(server)}</p>
 
 					<details class="sql-details">
 						<summary>View SQL</summary>

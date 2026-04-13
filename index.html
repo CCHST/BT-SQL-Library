@@ -583,6 +583,13 @@
 
 		try {
 			allQueries = await loadAllQueries();
+
+			allQueries.sort((a, b) => {
+				const nameA = String(a.query_name || a.queryName || '').toLowerCase();
+				const nameB = String(b.query_name || b.queryName || '').toLowerCase();
+				return nameA.localeCompare(nameB);
+			});
+
 			renderCards(allQueries);
 			applyFilters();
 		} catch (err) {

@@ -408,7 +408,7 @@
 			addTag(tables.some(t => t.includes('ship')), 'Shipment');
 			addTag(tables.some(t => t.includes('user')), 'User');
 			addTag(tables.some(t => t.includes('vendor')), 'Vendor');
-			addTag(tables.some(t => t.includes('whs') || t.includes('warehouse')), 'Warehouse');
+			addTag(tables.some(t => t.includes('wms') || t.includes('warehouse')), 'Warehouse');
 
 			if (tags.size === 0) {
 				tables.forEach(t => {

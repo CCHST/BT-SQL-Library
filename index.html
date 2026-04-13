@@ -390,38 +390,49 @@
 		}
 
 		function inferTags(query) {
-			if (Array.isArray(query.tags) && query.tags.length) {
-				return uniqueArray(query.tags.map(String));
-			}
-
-			const tags = new Set();
-			const text = [
-				query.query_name,
-				query.description,
-				...(query.tables_used || []),
-				...(query.columns_used || [])
-			].join(' ').toLowerCase();
-
-			const pushIf = (condition, tag) => {
-				if (condition) tags.add(tag);
-			};
-
-			pushIf(text.includes('vendor'), 'vendor');
-			pushIf(text.includes('purchase'), 'purchasing');
-			pushIf(text.includes('invoice'), 'invoice');
-			pushIf(text.includes('customer'), 'customer');
-			pushIf(text.includes('bom'), 'bom');
-			pushIf(text.includes('inventory'), 'inventory');
-			pushIf(text.includes('item'), 'item master');
-			pushIf(text.includes('intracode'), 'intracode');
-			pushIf(text.includes('externalitemid'), 'mapping');
-			pushIf(text.includes('approval') || text.includes('approver'), 'approval');
-			pushIf(text.includes('commodity'), 'commodity');
-
-			if (tags.size === 0) tags.add('sql');
-
-			return [...tags];
+		if (Array.isArray(query.tags) && query.tags.length) {
+			return uniqueArray(query.tags.map(String));
 		}
+
+		const tables = (query.tables_used || []).map(t => String(t).toLowerCase());
+		const tags = new Set();
+
+		const addTag = (condition, tag) => {
+			if (condition) tags.add(tag);
+		};
+
+		addTag(tables.some(t => t.includes('bom')), 'BOM');
+		addTag(tables.some(t => t.includes('invoice')), 'Invoice');
+		addTag(tables.some(t => t.includes('vendor')), 'Vendor');
+		addTag(tables.some(t => t.includes('purchase')), 'Purchase');
+		addTag(tables.some(t => t.includes('invent')), 'Inventory');
+		addTag(tables.some(t => t.includes('inventory')), 'Inventory');
+		addTag(tables.some(t => t.includes('sales')), 'Sales');
+		addTag(tables.some(t => t.includes('item_v') || t === 'item_v'), 'Item');
+		addTag(tables.some(t => t.includes('cust')), 'Customer');
+		addTag(tables.some(t => t.includes('customer')), 'Customer');
+		addTag(tables.some(t => t.includes('prod')), 'Production');
+		addTag(tables.some(t => t.includes('shipment')), 'Shipment');
+		addTag(tables.some(t => t.includes('ship')), 'Shipment');
+		addTag(tables.some(t => t.includes('price')), 'Price');
+		addTag(tables.some(t => t.includes('user')), 'User');
+		addTag(tables.some(t => t.includes('whs')), 'Warehouse');
+		addTag(tables.some(t => t.includes('warehouse')), 'Warehouse');
+
+
+		if (tags.size === 0) {
+			tables.forEach(t => {
+				const cleaned = t
+					.replace(/_v$/i, '')
+					.replace(/_r$/i, '')
+					.replace(/_/g, ' ')
+					.trim();
+				if (cleaned) tags.add(cleaned);
+			});
+		}
+
+		return [...tags];
+	}
 
 		function normalizeQuery(query, index) {
 			return {

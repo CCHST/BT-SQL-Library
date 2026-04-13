@@ -476,10 +476,6 @@
 				)];
 				const tablesText = query.tables_used.length ? query.tables_used.join(', ') : 'N/A';
 
-				const previewColumns = query.columns_used.length
-					? query.columns_used.slice(0, 6)
-					: [];
-				const moreColumnsCount = Math.max(query.columns_used.length - 6, 0);
 				const allColumnsHtml = query.columns_used.length
 					? query.columns_used.map(col => `<span>${escapeHtml(col)}</span>`).join('')
 					: '<span>N/A</span>';
@@ -508,15 +504,14 @@
 
 					<div class="meta-line">
 						<strong>Columns:</strong>
-						<span>${escapeHtml(previewColumns.join(', ') || 'N/A')}</span>
 						${query.columns_used.length > 0 ? `
-							<details class="columns-details" style="margin-top:0.45rem;">
-								<summary>View all columns${moreColumnsCount > 0 ? ` (+${moreColumnsCount} more)` : ''}</summary>
+							<details class="columns-details" style="margin-top:0.2rem;">
+								<summary>View all columns (${query.columns_used.length})</summary>
 								<div class="column-badges">
 									${allColumnsHtml}
 								</div>
 							</details>
-						` : ''}
+						` : '<span>N/A</span>'}
 					</div>
 
 					<p class="meta-line"><strong>Server:</strong> ${escapeHtml(server)}</p>

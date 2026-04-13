@@ -359,35 +359,54 @@
 		}
 
 		function inferCategory(query) {
-			if (query.category && String(query.category).trim()) {
-				return query.category;
-			}
-
-			const text = [
-				query.query_name,
-				query.description,
-				...(query.tables_used || []),
-				...(query.columns_used || [])
-			].join(' ').toLowerCase();
-
-			if (text.includes('invoice') || text.includes('delivery name') || text.includes('account name')) {
-				return 'Sales & Invoice';
-			}
-			if (text.includes('vendor') || text.includes('purchase')) {
-				return 'Vendor & Purchasing';
-			}
-			if (text.includes('bom') || text.includes('bill of materials')) {
-				return 'BOM';
-			}
-			if (text.includes('invent') || text.includes('inventory')) {
-				return 'Inventory';
-			}
-			if (text.includes('item_v') || text.includes('item master') || text.includes('item id')) {
-				return 'Item Master';
-			}
-
-			return 'General';
+		if (query.category && String(query.category).trim()) {
+			return query.category;
 		}
+
+		const tables = (query.tables_used || []).map(t => String(t).toLowerCase());
+
+		if (tables.some(t => t.includes('bom'))) {
+			return 'BOM';
+		}
+		if (tables.some(t => t.includes('cust') || t.includes('customer'))) {
+			return 'Customer';
+		}
+		if (tables.some(t => t.includes('invoice'))) {
+			return 'Invoice';
+		}
+		if (tables.some(t => t.includes('invent') || t.includes('inventory'))) {
+			return 'Inventory';
+		}
+		if (tables.some(t => t.includes('item'))) {
+			return 'Item';
+		}
+		if (tables.some(t => t.includes('purchase'))) {
+			return 'Purchase';
+		}
+		if (tables.some(t => t.includes('prod'))) {
+			return 'Production';
+		}
+		if (tables.some(t => t.includes('price'))) {
+			return 'Price';
+		}
+		if (tables.some(t => t.includes('sales'))) {
+			return 'Sales';
+		}
+		if (tables.some(t => t.includes('shipment')|| t.includes('ship'))) {
+			return 'Shipment';
+		}
+		if (tables.some(t => t.includes('user'))) {
+			return 'User';
+		}
+		if (tables.some(t => t.includes('vendor'))) {
+			return 'Vendor';
+		}
+		if (tables.some(t => t.includes('whs') || t.includes('warehouse'))) {
+			return 'Warehouse';
+		}
+
+		return 'General';
+	}
 
 		function inferTags(query) {
 		if (Array.isArray(query.tags) && query.tags.length) {
@@ -402,20 +421,20 @@
 		};
 
 		addTag(tables.some(t => t.includes('bom')), 'BOM');
-		addTag(tables.some(t => t.includes('invoice')), 'Invoice');
-		addTag(tables.some(t => t.includes('vendor')), 'Vendor');
-		addTag(tables.some(t => t.includes('purchase')), 'Purchase');
-		addTag(tables.some(t => t.includes('invent')), 'Inventory');
-		addTag(tables.some(t => t.includes('inventory')), 'Inventory');
-		addTag(tables.some(t => t.includes('sales')), 'Sales');
-		addTag(tables.some(t => t.includes('item_v') || t === 'item_v'), 'Item');
 		addTag(tables.some(t => t.includes('cust')), 'Customer');
 		addTag(tables.some(t => t.includes('customer')), 'Customer');
+		addTag(tables.some(t => t.includes('invoice')), 'Invoice');
+		addTag(tables.some(t => t.includes('invent')), 'Inventory');
+		addTag(tables.some(t => t.includes('inventory')), 'Inventory');
+		addTag(tables.some(t => t.includes('item')), 'Item');
+		addTag(tables.some(t => t.includes('purchase')), 'Purchase');
 		addTag(tables.some(t => t.includes('prod')), 'Production');
+		addTag(tables.some(t => t.includes('price')), 'Price');
+		addTag(tables.some(t => t.includes('sales')), 'Sales');
 		addTag(tables.some(t => t.includes('shipment')), 'Shipment');
 		addTag(tables.some(t => t.includes('ship')), 'Shipment');
-		addTag(tables.some(t => t.includes('price')), 'Price');
 		addTag(tables.some(t => t.includes('user')), 'User');
+		addTag(tables.some(t => t.includes('vendor')), 'Vendor');
 		addTag(tables.some(t => t.includes('whs')), 'Warehouse');
 		addTag(tables.some(t => t.includes('warehouse')), 'Warehouse');
 
@@ -484,7 +503,6 @@
 					<h3>${escapeHtml(query.query_name)}</h3>
 
 					<p class="badges">
-						<span>${escapeHtml(db)}</span>
 						<span>${escapeHtml(query.category)}</span>
 						${tags.map(tag => `<span>${escapeHtml(tag)}</span>`).join('')}
 					</p>

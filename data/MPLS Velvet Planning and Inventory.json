@@ -1,0 +1,90 @@
+[
+  {
+    "queryName": "BTOnHandInventoryView_V",
+    "sqlStatement": "SELECT \n    A.ITEMID,\n    SUM(A.PHYSICALINVENT) AS PHYSICALINVENTORY,\n    SUM(A.AVAILPHYSICAL)  AS AVAILABLEPHYSICAL,\n    SUM(A.RESERVPHYSICAL) AS RESERVPHYSICAL,\n    SUM(A.[ONORDER]) AS [ONORDER (Outbound)]\nFROM [JetAxDwh].[dbo].[INVENTSUM_V] A\nJOIN [INVENTDIM_V] B\n  ON A.INVENTDIMID = B.INVENTDIMID\n AND A.DATAAREAID  = B.DATAAREAID\nLEFT JOIN [INVENTBATCH_V] C\n  ON A.ITEMID        = C.ITEMID\n AND A.DATAAREAID    = C.DATAAREAID\n AND B.INVENTBATCHID = C.INVENTBATCHID\n AND B.[PARTITION]   = C.[PARTITION]\nWHERE A.DATAAREAID = 'rdsi'\n  AND B.INVENTLOCATIONID IN ('BT', 'BT-OPS', 'BT-DIST')\n  AND (B.WMSLOCATIONID IS NULL OR B.WMSLOCATIONID NOT IN ('PS-MRB', 'PS-QUAR', 'PS-RAF', 'PS-4C-RAF', 'PS-20-RAF', 'PS-80-RAF'))\n  AND (C.PDSBESTBEFOREDATE IS NULL OR C.PDSBESTBEFOREDATE >= CAST(GETDATE() AS date))\nGROUP BY A.ITEMID;",
+    "tablesUsed": ["INVENTSUM_V", "INVENTDIM_V", "INVENTBATCH_V"],
+    "columnsUsed": ["ITEMID", "PHYSICALINVENT", "AVAILPHYSICAL", "RESERVPHYSICAL", "ONORDER", "INVENTLOCATIONID", "WMSLOCATIONID", "PDSBESTBEFOREDATE", "INVENTDIMID", "DATAAREAID", "PARTITION"],
+    "dataSource": {
+      "server": "usmplpwdbs02.rndsystems.com",
+      "database": "JetAxDwh"
+    },
+    "description": "Aggregates inventory quantities by item from on-hand inventory view, filtered by location and best-before date."
+  },
+  {
+    "queryName": "SALESLINE_V",
+    "sqlStatement": "SELECT\n    INVENTLOCATIONID,\n    ITEMID,\n    CREATEDDATETIME,\n    REMAININVENTPHYSICAL,\n    SALESID,\n    DW_Id,\n    DATAAREAID,\n    SALESQTY,\n    REMAINSALESPHYSICAL,\n    REMAINSALESFINANCIAL,\n    [Outstanding Quantity],\n    [Unit Cost],\n    [SALESSTATUS]\nFROM dbo.SALESLINE_V\nWHERE\n    DATAAREAID = 'rdsi'\n    AND CREATEDDATETIME >= '2025-08-08'",
+    "tablesUsed": ["dbo.SALESLINE_V"],
+    "columnsUsed": ["INVENTLOCATIONID", "ITEMID", "CREATEDDATETIME", "REMAININVENTPHYSICAL", "SALESID", "DW_Id", "DATAAREAID", "SALESQTY", "REMAINSALESPHYSICAL", "REMAINSALESFINANCIAL", "Outstanding Quantity", "Unit Cost", "SALESSTATUS"],
+    "dataSource": {
+      "server": "usmplpwdbs02.rndsystems.com",
+      "database": "JetAxDwh"
+    },
+    "description": "Extracts sales line details for company 'rdsi' since August 8, 2025."
+  },
+  {
+    "queryName": "Production Order",
+    "sqlStatement": "SELECT\n    ITEMID,\n    NAME,\n    CASE CAST(PRODSTATUS AS varchar(10))\n        WHEN '0' THEN 'Created'\n        WHEN '1' THEN 'Estimated'\n        WHEN '2' THEN 'Scheduled'\n        WHEN '3' THEN 'Released'\n        WHEN '4' THEN 'Started'\n        WHEN '5' THEN 'Reported as Finished'\n        WHEN '7' THEN 'Ended'\n        ELSE CAST(PRODSTATUS AS varchar(10))\n    END AS PRODSTATUS,\n    PRODTYPE,\n    SCHEDSTATUS,\n    QTYSCHED,\n    QTYSTUP,\n    QTYCALC,\n    RESERVATION,\n    PRODPOSTINGTYPE,\n    INVENTTRANSID,\n    INVENTREFTYPE,\n    INVENTREFID,\n    INVENTREFTRANSID,\n    REMAININVENTPHYSICAL,\n    BOMID,\n    PRODID,\n    INVENTDIMID\nFROM dbo.ProdTable_V\nWHERE\n    DATAAREAID = 'rdsi'\n    AND PRODSTATUS NOT IN (5, 7)",
+    "tablesUsed": ["dbo.ProdTable_V"],
+    "columnsUsed": ["ITEMID", "NAME", "PRODSTATUS", "PRODTYPE", "SCHEDSTATUS", "QTYSCHED", "QTYSTUP", "QTYCALC", "RESERVATION", "PRODPOSTINGTYPE", "INVENTTRANSID", "INVENTREFTYPE", "INVENTREFID", "INVENTREFTRANSID", "REMAININVENTPHYSICAL", "BOMID", "PRODID", "INVENTDIMID", "DATAAREAID"],
+    "dataSource": {
+      "server": "usmplpwdbs02.rndsystems.com",
+      "database": "JetAxDwh"
+    },
+    "description": "Retrieves active production orders with human-readable status values, excluding finished and ended orders."
+  },
+  {
+    "queryName": "IM_ItemTransactionHistory",
+    "sqlStatement": "SELECT\n    ItemCode,\n    WarehouseCode,\n    TransactionDate,\n    TransactionCode,\n    TransactionQty\nFROM IM_ItemTransactionHistory\nWHERE\n    TransactionDate >= DATEADD(MONTH, -6, GETDATE())\n    AND TransactionCode = 'SO'\n    AND TransactionQty < 0\n    AND CustomerNo <> '0035509'",
+    "tablesUsed": ["IM_ItemTransactionHistory"],
+    "columnsUsed": ["ItemCode", "WarehouseCode", "TransactionDate", "TransactionCode", "TransactionQty", "CustomerNo"],
+    "dataSource": {
+      "server": "ussjopwdbs02.ad.bio-techne.com",
+      "database": "MAS90CBS"
+    },
+    "description": "Extracts sales order transactions from last 6 months, excluding transactions from customer 0035509."
+  },
+  {
+    "queryName": "Inventory Transactions_V",
+    "sqlStatement": "SELECT\n    it.[Item ID],\n    it.[Date Physical],\n    it.[Outbound Quantity],\n    it.[Cost Amount],\n    it.[Transaction Type],\n    ijt.UnitCost AS [Journal Unit Cost]\nFROM [dbo].[Inventory Transactions_V] it\nLEFT JOIN [dbo].[Inventory Trans Origin_V] ito\n    ON  it.INVENTTRANSORIGIN = ito.[RECID]\n    AND it.Company = ito.DATAAREAID\nLEFT JOIN [dbo].[Inventory Journal Document_V] ijd\n    ON  ito.[REFERENCEID] = ijd.[Journal ID]\n    AND ito.DATAAREAID = ijd.Company\nLEFT JOIN (\n    SELECT\n        Company,\n        [Item ID],\n        MIN([Unit Cost]) AS UnitCost\n    FROM [dbo].[Inventory Journal Transactions_V]  \n    WHERE\n        [Unit Cost] <> 0\n        AND Company = 'rdsi'\n    GROUP BY\n        Company,\n        [Item ID]\n) ijt\n    ON  ijt.Company = it.Company\n    AND ijt.[Item ID] = it.[Item ID]\nWHERE\n    it.[Company] = 'rdsi'\n    AND it.[Transaction Type] IN (0, 8)\n    AND it.[Date Physical] >= '2025-08-01'\n    AND it.[Item ID] IN (\n        SELECT DISTINCT [Item ID]\n        FROM [dbo].[Item_V]\n        WHERE PHANTOM = 0\n    )\n    AND (\n        ijd.[Journal Name Description] IS NULL\n        OR ijd.[Journal Name Description] NOT IN (\n            'Obsolete (AX) - Finished Goods',\n            'Obsolete (AX) - Intermediates',\n            'Obsolete (AX) - Raw Materials',\n            'Scrapped Inventory (AX) - Raw Materials',\n            'Scrapped Inventory (AX) Shipping Packaging',\n            'Scrapped Inventory (AX)-Finished Goods',\n            'Scrapped Inventory (AX)-Intermediates'\n        )\n    )\nORDER BY\n    it.[Date Physical] DESC;",
+    "tablesUsed": ["Inventory Transactions_V", "Inventory Trans Origin_V", "Inventory Journal Document_V", "Inventory Journal Transactions_V", "Item_V"],
+    "columnsUsed": ["Item ID", "Date Physical", "Outbound Quantity", "Cost Amount", "Transaction Type", "Journal Unit Cost", "RECID", "Company", "DATAAREAID", "REFERENCEID", "Journal ID", "Journal Name Description", "PHANTOM"],
+    "dataSource": {
+      "server": "usmplpwdbs02.rndsystems.com",
+      "database": "JetAxDwh"
+    },
+    "description": "Complex join retrieving inventory transactions with unit costs, excluding obsolete and scrap transactions since August 1, 2025."
+  },
+  {
+    "queryName": "BOM Lines (AX)",
+    "sqlStatement": "SELECT\n      BV.[BOMID]                                    AS [Parent Number],\n      BV.[ITEMID]                                   AS [Line Part],\n      BV.[BOMQTY]                                   AS [BOM Lines Qty],\n      BV.[OPRNUM]                                   AS [Oper. Num.],\n      BV.[UNITID]                                   AS [UOM],\n      BV.[ITEMBOMID],\n      BV.[DATAAREAID],\n      BVV.[NAME],\n      BVV.[FROMDATE],\n      BVV.[FROMQTY],\n      BVV.[RECID],\n      BT.[ITEMGROUPID],\n      H.[PERSONNELNUMBER]                           AS [APPROVER],\n      BT.[SITEID]                                   AS [Site],\n      CASE WHEN BT.[APPROVED] = 0 THEN 'No'\n           WHEN BT.[APPROVED] = 1 THEN 'Yes'\n      END                                           AS [APPROVED],\n      IV.[Item Name]                                AS [Product Name],\n      H.[Employee Name]                             AS [Approver Name],\n      CASE WHEN BV.[BOMQTYSERIE] = 0 THEN NULL\n           ELSE BV.[BOMQTY] * 1.0 / BV.[BOMQTYSERIE]\n      END                                           AS [Conversion Factor],\n      CONCAT(BV.[BOMID], ' / ', BV.[ITEMID])         AS [Parent-Child]\nFROM [JetAxDwh].[dbo].[Item_V] IV\nLEFT JOIN [JetAxDwh].[dbo].[BOM_V] BV\n       ON BV.[ITEMID] = IV.[Item ID]\n      AND BV.[DATAAREAID] = IV.[Company]\nLEFT JOIN [JetAxDwh].[dbo].[BOMVERSION_V] BVV\n       ON BVV.[BOMID] = BV.[BOMID]\n      AND BVV.[DATAAREAID] = BV.[DATAAREAID]\nLEFT JOIN [JetAxDwh].[dbo].[BOMTABLE_V] BT\n       ON BT.[BOMID] = BV.[BOMID]\n      AND BT.[DATAAREAID] = BV.[DATAAREAID]\nLEFT JOIN [JetAxDwh].[dbo].[HCMWORKER_V] H\n       ON H.[RECID] = BT.[APPROVER]\nWHERE IV.[Company] = 'rdsi'\n  AND BV.[ITEMID] <> 'NULL'\n  AND BVV.[ACTIVE] = 1\nORDER BY BV.[BOMID];",
+    "tablesUsed": ["Item_V", "BOM_V", "BOMVERSION_V", "BOMTABLE_V", "HCMWORKER_V"],
+    "columnsUsed": ["BOMID", "ITEMID", "BOMQTY", "OPRNUM", "UNITID", "ITEMBOMID", "DATAAREAID", "NAME", "FROMDATE", "FROMQTY", "RECID", "ITEMGROUPID", "PERSONNELNUMBER", "SITEID", "APPROVED", "Item Name", "Employee Name", "BOMQTYSERIE", "Company", "Item ID", "ACTIVE"],
+    "dataSource": {
+      "server": "usmplpwdbs02.rndsystems.com",
+      "database": "JetAxDwh"
+    },
+    "description": "Joins BOM structure with item, version, approval, and worker information for active BOMs, including conversion factors."
+  },
+  {
+    "queryName": "BBD visibility",
+    "sqlStatement": "SELECT\n    PB.PRODID,\n    PB.DATAAREAID,\n    PB.PARTITION,\n    CAST(PB.ITEMID AS varchar(80)) AS [Line Part],\n    CAST(PB.BOMID  AS varchar(80)) AS [Parent Number],\n    PB.BOMQTY,\n    PB.QTYBOMCALC,\n    CAST(PB.INVENTTRANSID AS varchar(80)) AS INVENTTRANSID,\n    CAST(IT.INVENTDIMID AS varchar(80)) AS INVENTDIMID,\n    CAST(D.INVENTBATCHID AS varchar(80)) AS INVENTBATCHID,\n    B.EXPDATE,\n    B.PDSBESTBEFOREDATE\nFROM dbo.ProdBom_V PB\nLEFT JOIN dbo.[Inventory Trans Origin_V] O\n  ON O.INVENTTRANSID = PB.INVENTTRANSID\n AND O.DATAAREAID    = PB.DATAAREAID\n AND O.ITEMID        = PB.ITEMID\n AND O.REFERENCEID   = PB.PRODID\nLEFT JOIN dbo.[Inventory Transactions_V] IT\n  ON IT.INVENTTRANSORIGIN = O.RECID\n AND IT.Company           = PB.DATAAREAID\n AND IT.[Item ID]         = PB.ITEMID\nLEFT JOIN dbo.INVENTDIM_V D\n  ON D.INVENTDIMID = IT.INVENTDIMID\n AND D.DATAAREAID  = PB.DATAAREAID\n AND D.PARTITION   = PB.PARTITION\nLEFT JOIN dbo.INVENTBATCH_V B\n  ON B.ITEMID        = PB.ITEMID\n AND B.INVENTBATCHID = D.INVENTBATCHID\n AND B.DATAAREAID    = PB.DATAAREAID\n AND B.PARTITION     = PB.PARTITION\nWHERE PB.DATAAREAID = 'rdsi'",
+    "tablesUsed": ["ProdBom_V", "Inventory Trans Origin_V", "Inventory Transactions_V", "INVENTDIM_V", "INVENTBATCH_V"],
+    "columnsUsed": ["PRODID", "DATAAREAID", "PARTITION", "ITEMID", "BOMID", "BOMQTY", "QTYBOMCALC", "INVENTTRANSID", "INVENTDIMID", "INVENTBATCHID", "EXPDATE", "PDSBESTBEFOREDATE", "Item ID", "REFERENCEID", "RECID", "Company"],
+    "dataSource": {
+      "server": "usmplpwdbs02.rndsystems.com",
+      "database": "JetAxDwh"
+    },
+    "description": "Links production BOM components to batch/expiry information for visibility of best-before-date across the BOM."
+  },
+  {
+    "queryName": "Expired in 30 days",
+    "sqlStatement": "WITH Inv_location AS (\n    SELECT\n        S.ITEMID,\n        D.INVENTLOCATIONID,\n        D.WMSLOCATIONID,\n        D.INVENTBATCHID,\n        SUM(S.PHYSICALINVENT)  AS PHYSICALINVENTORY,\n        SUM(S.AVAILPHYSICAL)   AS AVAILABLEPHYSICAL,\n        SUM(S.RESERVPHYSICAL)  AS RESERVPHYSICAL,\n        SUM(S.ONORDER)         AS ONORDER,\n        SUM(S.ORDERED)         AS ORDERED,\n        B.EXPDATE,\n        B.PDSBESTBEFOREDATE,\n        E.[Item Name]\n    FROM dbo.INVENTSUM_V S\n    JOIN dbo.INVENTDIM_V D\n      ON S.INVENTDIMID = D.INVENTDIMID\n     AND S.DATAAREAID  = D.DATAAREAID\n     AND S.[PARTITION] = D.[PARTITION]\n    LEFT JOIN dbo.INVENTBATCH_V B\n      ON B.ITEMID        = S.ITEMID\n     AND B.INVENTBATCHID = D.INVENTBATCHID\n     AND B.DATAAREAID    = S.DATAAREAID\n     AND B.[PARTITION]   = S.[PARTITION]\n    LEFT JOIN [Item_V] E\n    ON  S.ITEMID      = E.[Item ID]\n    AND S.[PARTITION] = E.[PARTITION]\n    AND S.DATAAREAID  = E.Company\n    WHERE S.DATAAREAID = 'rdsi'\n    GROUP BY\n        S.ITEMID, \n        D.INVENTLOCATIONID, D.WMSLOCATIONID, D.INVENTBATCHID,\n        B.EXPDATE, B.PDSBESTBEFOREDATE, E.[Item Name]\n),\nWHS_location AS (\n    SELECT\n        WMSLOCATIONID,\n        INVENTLOCATIONID,\n        DATAAREAID\n    FROM dbo.WMSLOCATION_V\n    WHERE DATAAREAID = 'rdsi'\n)\nSELECT\n    A.ITEMID,\n    A.INVENTLOCATIONID,\n    A.INVENTBATCHID,\n    A.PHYSICALINVENTORY,\n    A.AVAILABLEPHYSICAL,\n    A.RESERVPHYSICAL,\n    A.ONORDER,\n    A.ORDERED,\n    A.EXPDATE,\n    A.PDSBESTBEFOREDATE,\n    A.[Item Name],\n    CASE\n      WHEN A.PDSBESTBEFOREDATE IS NULL THEN 'YES'\n      WHEN A.EXPDATE IS NULL THEN 'YES'\n      WHEN CAST(GETDATE() AS date) < DATEADD(MONTH, -8, A.EXPDATE) THEN 'YES'\n      ELSE 'NO'\n    END AS Usable\nFROM Inv_location A\nLEFT JOIN WHS_location W\n  ON A.WMSLOCATIONID    = W.WMSLOCATIONID\n AND A.INVENTLOCATIONID = W.INVENTLOCATIONID\n AND W.DATAAREAID       = 'rdsi'",
+    "tablesUsed": ["INVENTSUM_V", "INVENTDIM_V", "INVENTBATCH_V", "Item_V", "WMSLOCATION_V"],
+    "columnsUsed": ["ITEMID", "INVENTLOCATIONID", "WMSLOCATIONID", "INVENTBATCHID", "PHYSICALINVENT", "AVAILPHYSICAL", "RESERVPHYSICAL", "ONORDER", "ORDERED", "EXPDATE", "PDSBESTBEFOREDATE", "Item Name", "DATAAREAID", "PARTITION"],
+    "dataSource": {
+      "server": "usmplpwdbs02.rndsystems.com",
+      "database": "JetAxDwh"
+    },
+    "description": "CTE-based query identifying inventory expiring within 30 days by location, warehouse, and batch with usability flag."
+  }
+]

@@ -480,12 +480,14 @@
 
 			data.forEach((rawQuery, index) => {
 				const query = normalizeQuery(rawQuery, index);
-
 				const db = query.data_source.database || 'Unknown DB';
 				const server = query.data_source.server || 'Unknown server';
-				const tags = query.tags;
+				const tags = [...new Set(
+					query.tags.filter(
+						tag => tag.trim().toLowerCase() !== query.category.trim().toLowerCase()
+					)
+				)];
 				const tablesText = query.tables_used.length ? query.tables_used.join(', ') : 'N/A';
-
 				const previewColumns = query.columns_used.length
 					? query.columns_used.slice(0, 6)
 					: [];

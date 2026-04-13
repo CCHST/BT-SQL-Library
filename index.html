@@ -1,54 +1,77 @@
 <!DOCTYPE HTML>
 <html>
-	<head>
-		<title>SQL Library</title>
-		<meta charset="utf-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
-		<link rel="stylesheet" href="assets/css/main.css" />
-		<style>
-			body, h1, h2, h3, h4, h5, h6, p, a, button, input, textarea {
-				font-family: Calibri, "Segoe UI", sans-serif;
-				color: #0072CE; 
-			}
+<head>
+	<title>SQL Library</title>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+	<link rel="stylesheet" href="assets/css/main.css" />
+	<style>
+		body, h1, h2, h3, h4, h5, h6, p, a, button, input, textarea, summary, pre {
+			font-family: Calibri, "Segoe UI", sans-serif;
+		}
 
-			#header {
-			padding-top: 0rem;     
-			padding-bottom: 1rem;  
-			margin-top: 0;         
-			}
+		body {
+			color: #333;
+		}
 
-			#logo {
+		#header {
+			padding-top: 10.5rem !important;
+			padding-bottom: 1rem;
+			margin-top: 0 !important;
+			border-bottom: none;
+		}
+
+		#header .container {
+			padding-top: 0 !important;
+			margin-top: 0 !important;
+		}
+
+		#logo {
 			margin-top: 0;
-			margin-bottom: 0.5rem;  
-			}
+			margin-bottom: 0.5rem;
+		}
 
-			#logo a { 
-				font-family: Calibri, "Segoe UI", sans-serif;
-				font-weight: 700;
-				color: #0072CE;
-				text-shadow: none;
-				white-space: nowrap;
-  				font-size: clamp(1.5rem, 5vw, 3rem);
-  				border: none;  /* remove any border */
-			}
+		#logo a {
+			font-family: Calibri, "Segoe UI", sans-serif;
+			font-weight: 700;
+			color: #0072CE;
+			text-shadow: none;
+			white-space: nowrap;
+			font-size: clamp(1.5rem, 5vw, 3rem);
+			border: none;
+		}
 
-			#portfolio { background:#f9fafc; padding:3rem 0; }
-			#portfolio header h2 { font-size:2rem; margin-bottom:1rem; }
-			#portfolio p { color:#333; } 
-			#portfolio .grid {
-			max-width: 1300px; 
-			margin-top: 2rem;                  /* wider overall container */
-			margin: 0 auto;                      /* center the grid */
-			grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); 
-			/* ↑ 330px minimum per card so text fits one line */
-			gap: 1.8rem;                          /* space between cards */
-			}
+		#page-wrapper {
+			padding-top: 0 !important;
+			margin-top: 0 !important;
+		}
 
-			#portfolio .card {
-			padding: 1.2rem 1.4rem;
-			}
+		#portfolio {
+			background: #f9fafc;
+			padding: 3rem 0;
+		}
 
-			.filters .pill {
+		#portfolio header h2 {
+			font-size: 2rem;
+			margin-bottom: 1rem;
+			color: #0072CE;
+		}
+
+		#portfolio p {
+			color: #333;
+		}
+
+		.filters {
+			display: flex;
+			flex-wrap: nowrap;
+			justify-content: flex-start;
+			align-items: center;
+			gap: 0.6rem;
+			overflow-x: auto;
+			margin-bottom: 1.5rem;
+		}
+
+		.filters .pill {
 			background: #fff;
 			color: #000 !important;
 			border: 1px solid #d4d4d4;
@@ -57,369 +80,452 @@
 			font-size: .9rem;
 			cursor: pointer;
 			transition: all .2s ease;
-			white-space: nowrap;  /* prevent text from wrapping inside pills */
-			flex-shrink: 0;  /* prevent pills from shrinking */
-			}
+			white-space: nowrap;
+			flex-shrink: 0;
+		}
 
-			.filters .pill.active,
-			.filters .pill:hover {
+		.filters .pill.active,
+		.filters .pill:hover {
 			background: #0072CE;
 			color: #fff !important;
 			border-color: #0072CE;
-			}
+		}
 
-			/* ====== layout updates (add these) ====== */
-			.filters {
-			display: flex;
-			flex-wrap: nowrap;  /* prevent wrapping to keep on one line */
-			justify-content: flex-start;  /* pills start on the left */
-			align-items: center;
-			gap: 0.6rem;
-			overflow-x: auto;  /* allow horizontal scroll if needed */
-			}
-
-			#tagSearch {
+		#tagSearch {
 			order: 1;
 			margin-left: auto;
-			width: 300px;       /* longer input */
+			width: 300px;
 			max-width: 300px;
-			min-width: 150px;   /* minimum width */
-			flex-shrink: 1;     /* let it shrink when space is tight */
-			border: none;       /* remove border */
-			border-bottom: 2px solid #d4d4d4;  /* subtle underline */
+			min-width: 150px;
+			flex-shrink: 1;
+			border: none;
+			border-bottom: 2px solid #d4d4d4;
 			padding: 0.5rem 0.75rem;
 			background: transparent;
 			outline: none;
 			transition: border-color 0.2s ease;
-			}
-			
-			#tagSearch:focus {
-			border-bottom-color: #0072CE;  /* blue underline on focus */
-			}
+			color: #333;
+		}
 
-			.grid {
-				display:grid;
-				grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-				gap:1.5rem;
-				max-width:1100px;
-				margin:0 auto;
-				align-items: stretch;
-			}
+		#tagSearch:focus {
+			border-bottom-color: #0072CE;
+		}
 
-			.card {
-				background:#fff; border:1px solid #e6e6e6; border-radius:12px;
-				padding:1.2rem 1.4rem;
-				box-shadow:0 2px 6px rgba(0,0,0,0.05);
-				display:flex; flex-direction:column; justify-content:space-between;
-				transition:transform .15s ease, box-shadow .15s ease;
-				height: 100%;
-			}
-			.card:hover {
-				transform:translateY(-3px);
-				box-shadow:0 4px 12px rgba(0,0,0,0.1);
-			}
-			.card p {
-			line-height: 1.4;   /* default is ~1.6; try 1.3–1.4 */
-			margin-bottom: 0.6rem; /* tighten the gap between paragraphs */
-			}
-			.card h3 { color:#0072CE; margin-top:0; font-size:1.15rem; }
-			.badges span {
-				display:inline-block; background:#eef3f7; color:#0072CE;
-				padding:.2rem .55rem; margin-right:.3rem; margin-bottom:.5rem;
-				border-radius:8px; font-size:.75rem;
-			}
-			.card .button {
-				background:#0072CE; color:#fff; border:none;
-				padding:.6rem 1rem; margin-top:1rem; border-radius:8px;
-				text-align:center; text-decoration:none;
-				transition:background .2s ease;
-			}
-			.card .button:hover { background:#005fa3; }
+		.grid {
+			display: grid;
+			grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+			gap: 1.5rem;
+			max-width: 1300px;
+			margin: 0 auto;
+			align-items: stretch;
+		}
 
-			/* Reduce overall page wrapper padding */
-			#page-wrapper {
-			padding-top: 0 !important;
-			margin-top: 0 !important;
-			}
+		.card {
+			background: #fff;
+			border: 1px solid #e6e6e6;
+			border-radius: 12px;
+			padding: 1.2rem 1.4rem;
+			box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+			display: flex;
+			flex-direction: column;
+			justify-content: space-between;
+			transition: transform .15s ease, box-shadow .15s ease;
+			height: 100%;
+		}
 
-			/* Pull the header section tighter to the top */
-			#header {
-			padding-top: 10.5rem !important;
-			margin-top: 0 !important;
-			padding-bottom: 1rem; /* space under the title */
-			border-bottom: none;  /* remove bottom border */
-			}
+		.card:hover {
+			transform: translateY(-3px);
+			box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+		}
 
-			/* Optional: tighten the container inside the header */
-			#header .container {
-			padding-top: 0 !important;
-			margin-top: 0 !important;
-			}
-		</style>
-	</head>
-	
-	<body>
-		<div id="page-wrapper">
-			<!-- Header -->
-				<section id="header">
-					<div class="container">
+		.card h3 {
+			color: #0072CE;
+			margin-top: 0;
+			margin-bottom: 0.75rem;
+			font-size: 1.15rem;
+		}
 
-						<!-- Logo -->
-							<h1 id="logo"><a href="index.html">BT-SQL Library</a></h1>
-							<p></p>
+		.card p {
+			line-height: 1.4;
+			margin-bottom: 0.6rem;
+			color: #333;
+		}
 
-					</div>
-				</section>
+		.badges {
+			margin-bottom: 0.6rem;
+		}
 
-				<!-- Portfolio -->
-				<section id="portfolio">
-					<div class="container">
-						<header>
-						<h2>SQL Queries</h2>
-						<p>Filter by category.</p>
-						</header>
+		.badges span {
+			display: inline-block;
+			background: #eef3f7;
+			color: #0072CE;
+			padding: .2rem .55rem;
+			margin-right: .3rem;
+			margin-bottom: .5rem;
+			border-radius: 8px;
+			font-size: .75rem;
+		}
 
-						<!-- Filters -->
-						<div class="filters">
-						<button class="pill active" data-filter="*">All</button>
-						<button class="pill" data-filter="Inventory & Planning">Inventory & Planning</button>
-						<button class="pill" data-filter="analytics">Data Analysis</button>
-						<button class="pill" data-filter="dashboards">Dashboard Development</button>
-						<button class="pill" data-filter="automation">Process Improvement & Automation</button>
+		.sql-details {
+			margin-top: 0.8rem;
+		}
 
-						<!-- move input here -->
-						<input id="tagSearch" type="text"
-								placeholder="Filter by tag 🔍" />
-						</div>
+		.sql-details summary {
+			cursor: pointer;
+			color: #0072CE;
+			font-weight: 600;
+			outline: none;
+		}
 
+		.sql-box {
+			white-space: pre-wrap;
+			word-break: break-word;
+			overflow-x: auto;
+			background: #f5f7fa;
+			padding: 0.8rem;
+			border-radius: 8px;
+			margin-top: 0.6rem;
+			color: #333;
+			font-size: 0.85rem;
+			max-height: 300px;
+			overflow-y: auto;
+			border: 1px solid #e2e8f0;
+		}
 
-						<!-- Cards -->
-						<div class="grid">
+		.empty-message,
+		.error-message,
+		.loading-message {
+			max-width: 1100px;
+			margin: 0 auto;
+			padding: 1rem;
+			background: #fff;
+			border: 1px solid #e6e6e6;
+			border-radius: 12px;
+		}
 
-						<!-- ======== Inventory & Planning ======== -->
-						<article class="card" data-category="Inventory & Planning" data-tags="fg supermarket,planning,inventory,expiry risk">
-							<h3>MPLS Planning And Inventory</h3>
-							<p class="badges"><span>Power BI</span><span>Inventory & Planning</span></p>
-							<p><strong>Problem:</strong> Teams lacked early visibility into inventory risk, including shortages, excess stock, and material at risk of scrap.</p>
-							<p><strong>Action:</strong> Built an FG Supermarket dashboard to monitor safety stock, projected scrap risk, and batch-level inventory conditions.</p>
-							<p><strong>Impact:</strong> Enabled earlier action on at-risk inventory and improved alignment between planning and operations.</p>
-							<a class="button" href="https://app.powerbi.com/groups/9feb67c5-011a-481e-b973-e16b6cdc3e3f/reports/49a70bed-980b-44d7-af28-62fd10b20050/a29a516ec04d40bae53d?experience=power-bi">View Project</a>
-						</article>
+		.error-message {
+			color: #b91c1c;
+		}
 
-						<article class="card" data-category="Inventory & Planning" data-tags="luminex,mrp,planning,inventory,expiry risk">
-							<h3>Luminex MRP</h3>
-							<p class="badges"><span>Power BI</span><span>Inventory & Planning</span></p>
-							<p><strong>Problem:</strong> Material planning depended on manual Excel files, limiting visibility into demand, kit coverage, and inventory risk.</p>
-							<p><strong>Action:</strong> Built a Power BI dashboard to track component demand, months on hand, match sets, and batch-level inventory status.</p>
-							<p><strong>Impact:</strong> Reduced manual tracking and gave planners clearer visibility into shortages, excess inventory, and priorities.</p>
-							<a class="button" href="https://app.powerbi.com/groups/ab17d56b-4905-49b3-898f-90a2c566cffc/reports/159ef28c-363f-4f31-aa59-749e98cf945f/5cd2dd64653dfc3fa292?experience=power-bi">View Project</a>
-						</article>
+		.meta-line {
+			font-size: 0.95rem;
+		}
 
-						<article class="card" data-category="Inventory & Planning" data-tags="cycle count,inventory accuracy,scrap risk">
-							<h3>Cycle Count</h3>
-							<p class="badges"><span>Power BI</span><span>Inventory & Planning</span></p>
-							<p><strong>Problem:</strong> Counts were driven by location and personal preference, so high-value and high-usage items were not always prioritized.</p>
-							<p><strong>Action:</strong> Built a Power BI dashboard with snapshot-based reporting to track scheduled vs. completed counts, accuracy, and variance over time.</p>
-							<p><strong>Impact:</strong> Improved visibility into count performance, inventory accuracy trends, and process gaps.</p>
-							<a class="button" href="https://app.powerbi.com/groups/ab17d56b-4905-49b3-898f-90a2c566cffc/reports/a8c878df-b07b-4a60-a4d7-095d28589007/48483a2b4b35943397de?experience=power-bi">View Project</a>
-						</article>
+		.small-note {
+			font-size: 0.85rem;
+			color: #666;
+		}
+	</style>
+</head>
 
-						<article class="card" data-category="Inventory & Planning" data-tags="inventory transfer,inventory reservation,shipping">
-							<h3>Inventory Transfer Request</h3>
-							<p class="badges"><span>Power BI</span><span>Inventory & Planning</span></p>
-							<p><strong>Problem:</strong> Teams had limited visibility into ITR demand, reservation status, and transfer execution, making it difficult to identify over-transfer risk, on-hold orders, and items that required manual follow-up.</p>
-							<p><strong>Action:</strong> Built a Power BI dashboard to track deliver remainder, reservation status, phantom items, and hold-related issues so teams could better monitor transfer needs and exceptions.</p>
-							<p><strong>Impact:</strong> Improved visibility into transfer risk and process gaps, helping teams take action earlier and reduce manual rework.</p>
-							<a class="button" href="https://app.powerbi.com/groups/ab17d56b-4905-49b3-898f-90a2c566cffc/reports/a3bebeca-ca8f-4e1e-aa3d-8170529279c7/6e9ff132ae0a99840cd9?experience=power-bi">View Project</a>
-						</article>
+<body>
+	<div id="page-wrapper">
+		<section id="header">
+			<div class="container">
+				<h1 id="logo"><a href="index.html">BT-SQL Library</a></h1>
+				<p></p>
+			</div>
+		</section>
 
-						<!-- ======== ANALYTICS ======== -->
-						<article class="card" data-category="analytics" data-tags="otd,reason codes,holiday effect,logistics">
-							<h3>OTD Misses — Root-Cause Analysis</h3>
-							<p class="badges"><span>Power BI</span><span>Analytics</span></p>
-							<p><strong>Problem:</strong> Mixed OTD signals made it difficult for leadership to identify and act on issues.</p>
-							<p><strong>Action:</strong> Weekly report analysis highlighting key issues and root causes.</p>
-							<p><strong>Impact:</strong> Provided leadership with clear insights to drive corrective actions.</p>
-							<a class="button" href="https://loop.cloud.microsoft/p/eyJ3Ijp7InUiOiJodHRwczovL3Jkc3lzdGVtc2luYy5zaGFyZXBvaW50LmNvbS8%2FbmF2PWN6MGxNa1ltWkQxaUlYbGxTR3hKZEdSSU5WVmhOWGhuU1VsbU5tOUVlbGhxTVdwZldrUjZUWEJDY1ZOeGVsRnVTakZYUjJZeE9UWkJNVlJEVHkxVWNIUlRaVFZZYVdSWFJua21aajB3TVZwTFUxbFhWVTgwVGxWQlZFMWFVMHRWTlVOTFNqTlNWMGhOVkRkQk0xUkVKbU05Sm1ac2RXbGtQVEUlM0QiLCJyIjpmYWxzZX0sInAiOnsidSI6Imh0dHBzOi8vcmRzeXN0ZW1zaW5jLnNoYXJlcG9pbnQuY29tLzpmbDovci9jb250ZW50c3RvcmFnZS94OEZOTy14dHNrdUNSWDJfZk1USExZZWJxcHZMYUhCR3VxUUJHMTJaazIwL0RvY3VtZW50JTIwTGlicmFyeS9Db3BpbG90L1VudGl0bGVkLmxvb3A%2FZD13OGI1OGEzOTAxNjFlNGI1ZDk3Y2U1MzdlZjhkNDI4MTMmY3NmPTEmd2ViPTEmbmF2PWN6MGxNa1pqYjI1MFpXNTBjM1J2Y21GblpTVXlSbmc0Ums1UExYaDBjMnQxUTFKWU1sOW1UVlJJVEZsbFluRndka3hoU0VKSGRYRlJRa2N4TWxwck1qQW1aRDFpSVhsbFNHeEpkR1JJTlZWaE5YaG5TVWxtTm05RWVsaHFNV3BmV2tSNlRYQkNjVk54ZWxGdVNqRlhSMll4T1RaQk1WUkRUeTFVY0hSVFpUVllhV1JYUm5rbVpqMHdNVnBMVTFsWFZVMVJWVTVOU1ZkSVVWZE1Wa1phVUZSVFZGQXpORTVKUzBGVUptTTlKVEpHSm1ac2RXbGtQVEVtWVQxTWIyOXdRWEJ3Sm5BOUpUUXdabXgxYVdSNEpUSkdiRzl2Y0Mxd1lXZGxMV052Ym5SaGFXNWxjaVo0UFNVM1FpVXlNbmNsTWpJbE0wRWxNakpVTUZKVVZVaDRlVnBJVGpWak0xSnNZbGhPY0dKdFRYVmpNbWhvWTIxV2QySXliSFZrUXpWcVlqSXhPRmxwUmpWYVZXaHpVMWhTYTFORVZsWlpWRlkwV2pCc1NscHFXblpTU0hCWllXcEdjVmd4Y0VWbGF6RjNVVzVHVkdOWWNGSmlhMjk0VmpCa2JVMVVhekpSVkVaVlVUQTRkRlpJUWpCVk1sVXhWMGRzYTFZd1dqVm1SRUY0VjJ0MFZGZFdaRlpVZWxKUFZsVkdWVlJXY0ZSVE1WVXhVVEIwUzAweFNsaFRSVEZWVGpCRmVsWkZVU1V6UkNVeU1pVXlReVV5TW1rbE1qSWxNMEVsTWpKbFlqaGtZVFptTWkxaVlqWXlMVFJrWXpVdFltUTBZaTAxT0Rsa09HWmxZalkzWkRrbE1qSWxOMFElM0QiLCJyIjpmYWxzZX0sImkiOnsiaSI6ImViOGRhNmYyLWJiNjItNGRjNS1iZDRiLTU4OWQ4ZmViNjdkOSJ9fQ%3D%3D">View report</a>
-						</article>
+		<section id="portfolio">
+			<div class="container">
+				<header>
+					<h2>SQL Queries</h2>
+					<p>Filter by category or search by tag, table, column, or description.</p>
+				</header>
 
-						<article class="card" data-category="analytics" data-tags="wave failure,investigation,shipping management">
-							<h3>Shipping Wave Failure Analysis</h3>
-							<p class="badges"><span>Power BI</span><span>Analytics</span></p>
-							<p><strong>Problem:</strong> Orders falling off the wave were not being captured.</p>
-							<p><strong>Action:</strong> Collaborated with the team, cataloged missed cases, and defined checks.</p>
-							<p><strong>Impact:</strong> Increased visibility and raised shipping team awareness.</p>
-							<a class="button" href="https://app.powerbi.com/groups/me/apps/2686e53f-a6c4-4520-b7ef-97c88256144a/reports/c83d35ca-9321-4b00-8075-293191f04f3d/690998b636d58d74cc3d?ctid=6792a6a4-b787-4700-9c17-f7364d0714a2&experience=power-bi&clientSideAuth=0">View Dashboard</a>
-						</article>
+				<div class="filters">
+					<button class="pill active" data-filter="*">All</button>
+					<button class="pill" data-filter="Inventory">Inventory</button>
+					<button class="pill" data-filter="BOM">BOM</button>
+					<button class="pill" data-filter="Vendor & Purchasing">Vendor & Purchasing</button>
+					<button class="pill" data-filter="Sales & Invoice">Sales & Invoice</button>
+					<button class="pill" data-filter="Item Master">Item Master</button>
+					<button class="pill" data-filter="General">General</button>
 
-						<!-- ======== DASHBOARDS ======== -->
-						<!-- <article class="card" data-category="dashboards" data-tags="a-item,inventory,abc,ax,power bi">
-							<h3>MPLS A-Item Health Dashboard</h3>
-							<p class="badges"><span>AX</span><span>Power BI</span></p>
-							<p><strong>Problem:</strong> No at-a-glance view of A-item risk.</p>
-							<p><strong>Action:</strong> Built a dashboard with pre-calculated health metrics that categorize A-items by stock status and degree of shortage, providing a quick snapshot of overall inventory health.</p>
-							<p><strong>Impact:</strong> Clearer visibility into A-item inventory health.</p>
-							<a class="button" href="#">Temporarily Unavailable</a>
-						</article>
-						-->
+					<input id="tagSearch" type="text" placeholder="Filter by tag or keyword 🔍" />
+				</div>
 
-						<article class="card" data-category="dashboards" data-tags="bom,levels,relationships,smartsheet,velvet">
-							<h3>BOM Levels & Relationships</h3>
-							<p class="badges"><span>Power BI</span><span>Smartsheet</span><span>BOM</span></p>
-							<p><strong>Problem:</strong> Difficulty visualizing subkit structure and conversion details.</p>
-							<p><strong>Action:</strong> Expanded hierarchy levels with conversion factors for clearer parent-child relationships.</p>
-							<p><strong>Impact:</strong> Improved visibility enables more accurate production planning.</p>
+				<div class="grid" id="queryGrid">
+					<div class="loading-message">Loading query library...</div>
+				</div>
+			</div>
+		</section>
 
-							<!-- First link -->
-							<a class="button" href="https://app.powerbi.com/links/GbA1xFAjgg?ctid=6792a6a4-b787-4700-9c17-f7364d0714a2&pbi_source=linkShare&bookmarkGuid=07117cc3-038f-4ae9-b13c-d4f5a6023795">
-								View Dashboard
-							</a>
-
-							<!-- Second link -->
-							<a class="button" href="https://app.smartsheet.com/sheets/FWJ4P9xRJc6J595964RWJ5JqG4mVp96QC92Pj641">
-								View Smartsheet
-							</a>
-						</article>
-
-						<article class="card" data-category="dashboards" data-tags="ncmr,quality,rtv,supplier management">
-							<h3>Non Conforming Material Report</h3>
-							<p class="badges"><span>Power BI</span><span>Supplier Management</span></p>
-							<p><strong>Problem:</strong> NCMR data was difficult to monitor consistently, limiting visibility into defect trends, processing time, and supplier-related quality issues.</p>
-							<p><strong>Action:</strong> Built a Power BI dashboard to track NCMR volume, status, cycle time, and disposition details, with drill-down capability for supplier and process-level analysis.</p>
-							<p><strong>Impact:</strong> Improved visibility into quality trends and process performance, helping teams identify recurring issues and prioritize follow-up actions more effectively.</p>
-							<a class="button" href="https://app.powerbi.com/groups/a42b3d9e-1f34-41ec-81a9-fa2cd5315e5a/reports/092ef261-8b5f-4054-b969-c784859d6a72/6736c25a022c9aa132d3?experience=power-bi">View Dashboard</a>
-						</article>
-
-						<article class="card" data-category="dashboards" data-tags="logistics spend,hts,fedex,dhl">
-							<h3>Logistics Spend Dashboard</h3>
-							<p class="badges"><span>Power BI</span><span>Logistics</span></p>
-							<p><strong>Problem:</strong> Freight and tariff costs viewed in a fragmented way.</p>
-							<p><strong>Action:</strong> Consolidated carriers and HTS data with trend analysis and drill-down capabilities.</p>
-							<p><strong>Impact:</strong> Clear cost drivers identified and actions prioritized effectively.</p>
-							<a class="button" href="https://app.powerbi.com/Redirect?action=OpenReport&appId=670e05da-c8c0-4c1f-99bc-70700a7b18e5&reportObjectId=15c34dc4-26b5-4cce-82f6-676d42a9751b&ctid=6792a6a4-b787-4700-9c17-f7364d0714a2&reportPage=29c6827ca6aa0bd43d94&pbi_source=appShareLink&portalSessionId=c7028157-f364-42e3-8b7e-c482377c95d0">View Dashboard</a>
-						</article>
-
-						<!-- <article class="card" data-category="dashboards" data-tags="logistics spend,hts,fedex,dhl">
-							<h3>Production Orders RAF'd Dashboard</h3>
-							<p class="badges"><span>Power BI</span><span>Production Orders</span></p>
-							<p><strong>Problem:</strong> Lack of data for planned order completions and no visibility into daily finished orders.</p>
-							<p><strong>Action:</strong> Provided real-time tracking of order progress with daily completion metrics.</p>
-							<p><strong>Impact:</strong> Provides a reference for how many orders are expected to be completed daily per person and per workstation.</p>
-							<a class="button" href="https://app.powerbi.com/Redirect?action=OpenReport&appId=2686e53f-a6c4-4520-b7ef-97c88256144a&reportObjectId=ea5b5d32-615e-4a37-9d7a-f2351350fa75&ctid=6792a6a4-b787-4700-9c17-f7364d0714a2&reportPage=c752d826c60ce771bd37&pbi_source=appShareLink&portalSessionId=c7028157-f364-42e3-8b7e-c482377c95d0">View Dashboard</a>
-						</article>
-						-->
-
-							<!-- ======== AUTOMATION ======== -->
-						<article class="card" data-category="automation" data-tags="template,shipping delay,consumables,weekly report">
-							<h3>PRISM</h3>
-							<p class="badges"><span>AX</span><span>Smartsheet</span><span>Power BI</span></p>
-							<p><strong>Problem:</strong> Backorders grew due to lack of real-time data, risking customer loss.</p>
-							<p><strong>Action:</strong> Linked sales orders to production orders → planners release on time, manufacturing avoids chasing unavailable materials, kitting gains clear daily priorities.</p>
-							<p><strong>Impact:</strong> Clear visibility for leadership, planners, and kitting → faster backlog burn-down.</p>
-							<a class="button" href="https://app.smartsheet.com/sheets/grQ9CRwF6qJxMMVhF7PP5p3gFwwF5vw3475M9PQ1?view=grid">View Project</a>
-						</article>
-
-						<article class="card" data-category="automation" data-tags="template,shipping delay,consumables,weekly report">
-							<h3>Lead Time Exceptions Report</h3>
-							<p class="badges"><span>Excel</span></p>
-							<p><strong>Problem:</strong> Weekly report assembly was repetitive and required checking multiple reports to find related components, item descriptions, business units, and whether an item was an A-item.</p>
-							<p><strong>Action:</strong> Reusable template + pre-calculated fields.</p>
-							<p><strong>Impact:</strong> Report build time decreased significantly.</p>
-							<a class="button" href="https://rdsystemsinc-my.sharepoint.com/:x:/g/personal/cindy_cheng_bio-techne_com/EWRqrl0ummFLlhffggUvyusBgw6FRIqToqewHJR_TjE1FQ?e=X5WPxd">View Excel</a>
-						</article>
-
-						<article class="card" data-category="automation" data-tags="vba,ehs,automation,pdf,excel">
-							<h3>VBA for MPLS & SJ Backlog report</h3>
-							<p class="badges"><span>VBA</span><span>Excel</span><span>Outlook</span></p>
-							<p><strong>Problem:</strong> Manual copy-paste and email preparation.</p>
-							<p><strong>Action:</strong> Developed a VBA macro to create the new backlog file and generate a pre-filled Outlook email.</p>
-							<p><strong>Impact:</strong> Reduced preparation time by approximately 90% and decreased manual errors.</p>
-							<a class="button" href="https://rdsystemsinc-my.sharepoint.com/:x:/g/personal/cindy_cheng_bio-techne_com/EU3YkeUrWShNvmlsL8b944UBsENTK9sYflVbaz1-Kc5cuw?e=VSWaUV">View Excel</a>
-						</article>
-
-						<article class="card" data-category="automation" data-tags="vba,ehs,automation,pdf,excel">
-							<h3>VBA for China Daily Exports</h3>
-							<p class="badges"><span>VBA</span><span>Excel</span></p>
-							<p><strong>Problem:</strong> Manually copying and pasting values for four reports.</p>
-							<p><strong>Action:</strong> Developed a VBA macro to copy and paste data from source files to target files.</p>
-							<p><strong>Impact:</strong> Reduced preparation time by approximately 90% and decreased manual errors.</p>
-							<a class="button" href="https://rdsystemsinc-my.sharepoint.com/:x:/g/personal/cindy_cheng_bio-techne_com/EThq2rhqNExEhN5ylUZMv-EB6jEMohn3-DfQ59HzogMvkQ?e=ASPH2K">View Excel</a>
-						</article>
-
-						<article class="card" data-category="automation" data-tags="vba,ehs,automation,pdf,excel">
-							<h3>VBA for EHS Department</h3>
-							<p class="badges"><span>VBA</span><span>Excel</span><span>PDF</span></p>
-							<p><strong>Problem:</strong> Manual extraction of PDF invoices delayed reporting.</p>
-							<p><strong>Action:</strong> Developed a VBA macro to automatically save PDF attachments and record results in the master sheet.</p>
-							<p><strong>Impact:</strong> Reduced preparation time by approximately 70% and decreased manual errors.</p>	
-							<a class="button" href="https://rdsystemsinc-my.sharepoint.com/:x:/g/personal/cindy_cheng_bio-techne_com/EQu4U9a7zZNJhyLh1qjwEp0BtRE9PY-yVTPqqGh2sJVB7A?e=uahZaK">View Excel</a>
-						</article>
-						
-						</div>
-					</div>
-				</section>
-
-			<!-- Footer -->
-				<section id="footer">
-					<div class="container">
-						<div class="row">
-							<div class="col-12">
-								<section>
-									<div class="row">
-										<div class="col-12">
-											<ul class="icons">
-												<li class="icon solid fa-envelope">
-													<a href="mailto:SCDataAnalytics@bio-techne.com">SCDataAnalytics@bio-techne.com</a>
-												</li>
-											</ul>
-										</div>
-									</div>
-								</section>
+		<section id="footer">
+			<div class="container">
+				<div class="row">
+					<div class="col-12">
+						<section>
+							<div class="row">
+								<div class="col-12">
+									<ul class="icons">
+										<li class="icon solid fa-envelope">
+											<a href="mailto:SCDataAnalytics@bio-techne.com">SCDataAnalytics@bio-techne.com</a>
+										</li>
+									</ul>
+								</div>
 							</div>
-						</div>
+						</section>
 					</div>
-					<div id="copyright" class="container">
-						<ul class="links">
-							<li>&copy; Untitled. All rights reserved.</li><li>Design: <a href="http://html5up.net">HTML5 UP</a> & Cindy C</li>
-						</ul>
-					</div>
-				</section>
+				</div>
+			</div>
+			<div id="copyright" class="container">
+				<ul class="links">
+					<li>&copy; Untitled. All rights reserved.</li><li>Design: <a href="http://html5up.net">HTML5 UP</a> & Cindy C</li>
+				</ul>
+			</div>
+		</section>
+	</div>
 
-		</div>
+	<script src="assets/js/jquery.min.js"></script>
+	<script src="assets/js/jquery.dropotron.min.js"></script>
+	<script src="assets/js/browser.min.js"></script>
+	<script src="assets/js/breakpoints.min.js"></script>
+	<script src="assets/js/util.js"></script>
+	<script src="assets/js/main.js"></script>
 
-		<!-- Scripts -->
-			<script src="assets/js/jquery.min.js"></script>
-			<script src="assets/js/jquery.dropotron.min.js"></script>
-			<script src="assets/js/browser.min.js"></script>
-			<script src="assets/js/breakpoints.min.js"></script>
-			<script src="assets/js/util.js"></script>
-			<script src="assets/js/main.js"></script>
-			<script>
-			(function(){
-				const pills = document.querySelectorAll('.filters .pill');
-				const cards = document.querySelectorAll('#portfolio .grid .card');
-				const search = document.getElementById('tagSearch');
+	<script>
+	(async function () {
+		const pills = document.querySelectorAll('.filters .pill');
+		const search = document.getElementById('tagSearch');
+		const grid = document.getElementById('queryGrid');
 
-				function applyFilters() {
-				const active = document.querySelector('.filters .pill.active')?.dataset.filter || '*';
-				const q = (search.value || '').trim().toLowerCase();
-				cards.forEach(c => {
-					const catOk = (active === '*') || c.dataset.category.includes(active);
-					const tags = (c.dataset.tags || '').toLowerCase();
-					const tagOk = !q || tags.includes(q);
-					c.style.display = (catOk && tagOk) ? '' : 'none';
-				});
-				}
+		let allQueries = [];
 
-				pills.forEach(p => p.addEventListener('click', () => {
-				pills.forEach(x => x.classList.remove('active'));
-				p.classList.add('active');
+		async function loadManifest() {
+			const res = await fetch('data/manifest.json');
+			if (!res.ok) {
+				throw new Error('Failed to load data/manifest.json');
+			}
+			return await res.json();
+		}
+
+		async function loadAllQueries() {
+			const files = await loadManifest();
+
+			const results = await Promise.all(
+				files.map(async (file) => {
+					const res = await fetch(`data/${file}`);
+					if (!res.ok) {
+						throw new Error(`Failed to load data/${file}`);
+					}
+					const json = await res.json();
+					return Array.isArray(json) ? json : [];
+				})
+			);
+
+			return results.flat();
+		}
+
+		function escapeHtml(text) {
+			return String(text ?? '')
+				.replace(/&/g, '&amp;')
+				.replace(/</g, '&lt;')
+				.replace(/>/g, '&gt;')
+				.replace(/"/g, '&quot;')
+				.replace(/'/g, '&#039;');
+		}
+
+		function uniqueArray(values) {
+			return [...new Set((values || []).filter(Boolean))];
+		}
+
+		function inferCategory(query) {
+			if (query.category && String(query.category).trim()) {
+				return query.category;
+			}
+
+			const text = [
+				query.query_name,
+				query.description,
+				...(query.tables_used || []),
+				...(query.columns_used || [])
+			].join(' ').toLowerCase();
+
+			if (text.includes('invoice') || text.includes('delivery name') || text.includes('account name')) {
+				return 'Sales & Invoice';
+			}
+			if (text.includes('vendor') || text.includes('purchase')) {
+				return 'Vendor & Purchasing';
+			}
+			if (text.includes('bom') || text.includes('bill of materials')) {
+				return 'BOM';
+			}
+			if (text.includes('invent') || text.includes('inventory')) {
+				return 'Inventory';
+			}
+			if (text.includes('item_v') || text.includes('item master') || text.includes('item id')) {
+				return 'Item Master';
+			}
+
+			return 'General';
+		}
+
+		function inferTags(query) {
+			if (Array.isArray(query.tags) && query.tags.length) {
+				return uniqueArray(query.tags.map(String));
+			}
+
+			const tags = new Set();
+			const text = [
+				query.query_name,
+				query.description,
+				...(query.tables_used || []),
+				...(query.columns_used || [])
+			].join(' ').toLowerCase();
+
+			const pushIf = (condition, tag) => {
+				if (condition) tags.add(tag);
+			};
+
+			pushIf(text.includes('vendor'), 'vendor');
+			pushIf(text.includes('purchase'), 'purchasing');
+			pushIf(text.includes('invoice'), 'invoice');
+			pushIf(text.includes('customer'), 'customer');
+			pushIf(text.includes('bom'), 'bom');
+			pushIf(text.includes('inventory'), 'inventory');
+			pushIf(text.includes('item'), 'item master');
+			pushIf(text.includes('intracode'), 'intracode');
+			pushIf(text.includes('externalitemid'), 'mapping');
+			pushIf(text.includes('approval') || text.includes('approver'), 'approval');
+			pushIf(text.includes('commodity'), 'commodity');
+			pushIf(text.includes('sql'), 'sql');
+
+			if (tags.size === 0) tags.add('sql');
+
+			return [...tags];
+		}
+
+		function normalizeQuery(query, index) {
+			return {
+				id: query.id || `query-${index + 1}`,
+				query_name: query.query_name || 'Untitled Query',
+				category: inferCategory(query),
+				tags: inferTags(query),
+				data_source: query.data_source || {},
+				sql_statement: query.sql_statement || '',
+				tables_used: Array.isArray(query.tables_used) ? query.tables_used : [],
+				columns_used: Array.isArray(query.columns_used) ? query.columns_used : [],
+				complexity: query.complexity || 'N/A',
+				description: query.description || 'No description provided.'
+			};
+		}
+
+		function renderCards(data) {
+			if (!data.length) {
+				grid.innerHTML = '<div class="empty-message">No query data found.</div>';
+				return;
+			}
+
+			grid.innerHTML = '';
+
+			data.forEach((rawQuery, index) => {
+				const query = normalizeQuery(rawQuery, index);
+
+				const db = query.data_source.database || 'Unknown DB';
+				const server = query.data_source.server || 'Unknown server';
+				const tags = query.tags;
+				const tablesText = query.tables_used.length ? query.tables_used.join(', ') : 'N/A';
+				const columnsPreview = query.columns_used.length
+					? query.columns_used.slice(0, 6).join(', ')
+					: 'N/A';
+				const moreColumnsCount = Math.max(query.columns_used.length - 6, 0);
+
+				const article = document.createElement('article');
+				article.className = 'card';
+				article.dataset.category = query.category;
+				article.dataset.tags = tags.join(',').toLowerCase();
+				article.dataset.search = [
+					query.query_name,
+					query.description,
+					query.category,
+					db,
+					server,
+					...tags,
+					...query.tables_used,
+					...query.columns_used
+				].join(' ').toLowerCase();
+
+				article.innerHTML = `
+					<h3>${escapeHtml(query.query_name)}</h3>
+
+					<p class="badges">
+						<span>${escapeHtml(db)}</span>
+						<span>${escapeHtml(query.category)}</span>
+						${tags.map(tag => `<span>${escapeHtml(tag)}</span>`).join('')}
+					</p>
+
+					<p><strong>Description:</strong> ${escapeHtml(query.description)}</p>
+					<p class="meta-line"><strong>Tables:</strong> ${escapeHtml(tablesText)}</p>
+					<p class="meta-line">
+						<strong>Columns:</strong> ${escapeHtml(columnsPreview)}
+						${moreColumnsCount > 0 ? `<span class="small-note"> (+${moreColumnsCount} more)</span>` : ''}
+					</p>
+					<p class="meta-line"><strong>Complexity:</strong> ${escapeHtml(query.complexity)}</p>
+					<p class="meta-line"><strong>Server:</strong> ${escapeHtml(server)}</p>
+
+					<details class="sql-details">
+						<summary>View SQL</summary>
+						<pre class="sql-box">${escapeHtml(query.sql_statement || 'No SQL available.')}</pre>
+					</details>
+				`;
+
+				grid.appendChild(article);
+			});
+		}
+
+		function applyFilters() {
+			const active = document.querySelector('.filters .pill.active')?.dataset.filter || '*';
+			const q = (search.value || '').trim().toLowerCase();
+			const cards = document.querySelectorAll('#queryGrid .card');
+
+			let visibleCount = 0;
+
+			cards.forEach((card) => {
+				const category = card.dataset.category || '';
+				const searchText = card.dataset.search || '';
+
+				const categoryOk = active === '*' || category === active;
+				const searchOk = !q || searchText.includes(q);
+
+				const shouldShow = categoryOk && searchOk;
+				card.style.display = shouldShow ? '' : 'none';
+
+				if (shouldShow) visibleCount++;
+			});
+
+			const oldEmpty = document.getElementById('noResultsMessage');
+			if (oldEmpty) oldEmpty.remove();
+
+			if (visibleCount === 0) {
+				const msg = document.createElement('div');
+				msg.id = 'noResultsMessage';
+				msg.className = 'empty-message';
+				msg.textContent = 'No matching queries found.';
+				grid.appendChild(msg);
+			}
+		}
+
+		pills.forEach((pill) => {
+			pill.addEventListener('click', () => {
+				pills.forEach((x) => x.classList.remove('active'));
+				pill.classList.add('active');
 				applyFilters();
-				}));
+			});
+		});
 
-				search.addEventListener('input', applyFilters);
-			})();
-			</script>
+		search.addEventListener('input', applyFilters);
 
-	</body>
+		try {
+			allQueries = await loadAllQueries();
+			renderCards(allQueries);
+			applyFilters();
+		} catch (err) {
+			console.error(err);
+			grid.innerHTML = `<div class="error-message">Failed to load query data. Check your data/manifest.json path and JSON files.</div>`;
+		}
+	})();
+	</script>
+</body>
 </html>

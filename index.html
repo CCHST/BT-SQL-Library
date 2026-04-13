@@ -168,6 +168,9 @@
 		.description-block,
 		.meta-line {
 			margin: 0;
+			text-align: left;
+			word-spacing: normal;
+			letter-spacing: normal;
 		}
 
 		.sql-details {
@@ -463,7 +466,11 @@
 						tag => tag.trim().toLowerCase() !== query.category.trim().toLowerCase()
 					)
 				)];
-				const tablesText = query.tables_used.length ? query.tables_used.join(', ') : 'N/A';
+
+				const allTablesHtml = query.tables_used.length
+					? query.tables_used.map(t => `<span>${escapeHtml(t)}</span>`).join('')
+					: '<span>N/A</span>';
+
 				const allColumnsHtml = query.columns_used.length
 					? query.columns_used.map(col => `<span>${escapeHtml(col)}</span>`).join('')
 					: '<span>N/A</span>';
@@ -489,7 +496,12 @@
 							<p><strong>Description:</strong> ${escapeHtml(query.description)}</p>
 						</div>
 
-						<p class="meta-line"><strong>Tables:</strong> ${escapeHtml(tablesText)}</p>
+						<div class="meta-line">
+							<strong>Tables:</strong>
+							<div class="column-badges">
+								${allTablesHtml}
+							</div>
+						</div>
 
 						<div class="meta-line">
 							<strong>Columns:</strong>

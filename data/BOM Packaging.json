@@ -1,157 +1,57 @@
 [
   {
-    "query_name": "BoM (AX)",
-    "data_source": {
+    "queryName": "BoM (AX)",
+    "dataSource": {
       "server": "usmplpwdbs02.rndsystems.com",
       "database": "JetAxDwh"
     },
-    "sql_statement": "WITH bom_line AS (\n    SELECT\n          BV.[BOMID] AS [Parent Number]\n        , BV.[ITEMID] AS [Line Part]\n        , BV.[BOMQTY] AS [BOM Lines Qty]\n        , BV.[OPRNUM] AS [Oper. Num.]\n        , BV.[UNITID] AS [UOM]\n        , BV.[DATAAREAID]\n        , BVV.NAME\n        , BVV.FROMDATE\n        , BVV.TODATE\n        , BVV.FROMQTY\n        , CASE\n            WHEN BVV.ACTIVE = 0 THEN 'No'\n            WHEN BVV.ACTIVE = 1 THEN 'Yes'\n          END AS [ACTIVE]\n        , BVV.RECID\n        , IV.[Item Group ID] AS [Item Group ID]\n        , H.PERSONNELNUMBER AS [APPROVER]\n        , BT.[SITEID] AS [Site]\n        , CASE\n            WHEN BT.[APPROVED] = 0 THEN 'No'\n            WHEN BT.[APPROVED] = 1 THEN 'Yes'\n          END AS [APPROVED]\n        , IV.[Item Name] AS [Product Name]\n        , H.[Employee Name] AS [Approver Name]\n        , CASE\n            WHEN BV.BOMQTYSERIE = 0 THEN NULL\n            ELSE BV.BOMQTY / BV.BOMQTYSERIE\n          END AS [Conversion Factor]\n        , BV.BOMQTYSERIE AS [Per series]\n        , IV.[Item Type Description]\n    FROM [JetAxDwh].[dbo].[Item_V] IV\n    LEFT JOIN BOM_V BV\n        ON BV.ITEMID = IV.[Item ID]\n       AND BV.DATAAREAID = IV.Company\n    LEFT JOIN BOMVERSION_V BVV\n        ON BV.BOMID = BVV.BOMID\n       AND BVV.DATAAREAID = BV.DATAAREAID\n    LEFT JOIN BOMTABLE_V BT\n        ON BV.BOMID = BT.BOMID\n       AND BT.DATAAREAID = BV.DATAAREAID\n    LEFT JOIN HCMWORKER_V H\n        ON H.RECID = BT.APPROVER\n    WHERE IV.Company = 'rdsi'\n      AND BV.ITEMID IS NOT NULL\n      AND BVV.ACTIVE = 1\n      AND (BVV.TODATE IS NULL OR BVV.TODATE >= CAST(GETDATE() AS date) OR BVV.TODATE = '')\n),\n\ncommoditycode AS (\n    SELECT DISTINCT\n          [INTRACODE]\n        , ITEMID\n    FROM [JetAxDwh].[dbo].[INVENTTABLE_V]\n    WHERE [DATAAREAID] = 'rdsi'\n)\n\nSELECT *\nFROM bom_line a\nLEFT JOIN commoditycode b\nON a.[Line Part] = b.ITEMID",
-    "tables_used": [
-      "Item_V",
-      "BOM_V",
-      "BOMVERSION_V",
-      "BOMTABLE_V",
-      "HCMWORKER_V",
-      "INVENTTABLE_V"
-    ],
-    "columns_used": [
-      "Parent Number (BOMID)",
-      "Line Part (ITEMID)",
-      "BOM Lines Qty (BOMQTY)",
-      "Oper. Num. (OPRNUM)",
-      "UOM (UNITID)",
-      "DATAAREAID",
-      "NAME",
-      "FROMDATE",
-      "TODATE",
-      "FROMQTY",
-      "RECID",
-      "APPROVER",
-      "Site (SITEID)",
-      "APPROVED",
-      "Product Name",
-      "Approver Name",
-      "Conversion Factor",
-      "Per series (BOMQTYSERIE)",
-      "Item Group ID",
-      "Item Type Description",
-      "INTRACODE"
-    ],
-    "complexity": "High (2 CTEs, 5-way join with LEFT JOINs, CASE logic, date filters)",
-    "description": "Extracts complete Bill of Materials structure from Dynamics AX, joining BOM master, versions, approval details, and commodity codes. Includes active BOM versions only, with effective date ranges and approver information."
+    "sqlStatement": "WITH bom_line AS (\n    SELECT\n          BV.[BOMID] AS [Parent Number]\n        , BV.[ITEMID] AS [Line Part]\n        , BV.[BOMQTY] AS [BOM Lines Qty]\n        , BV.[OPRNUM] AS [Oper. Num.]\n        , BV.[UNITID] AS [UOM]\n        , BV.[DATAAREAID]\n        , BVV.NAME\n        , BVV.FROMDATE\n        , BVV.TODATE\n        , BVV.FROMQTY\n        , CASE\n            WHEN BVV.ACTIVE = 0 THEN 'No'\n            WHEN BVV.ACTIVE = 1 THEN 'Yes'\n          END AS [ACTIVE]\n        , BVV.RECID\n        , IV.[Item Group ID] AS [Item Group ID]\n        , H.PERSONNELNUMBER AS [APPROVER]\n        , BT.[SITEID] AS [Site]\n        , CASE\n            WHEN BT.[APPROVED] = 0 THEN 'No'\n            WHEN BT.[APPROVED] = 1 THEN 'Yes'\n          END AS [APPROVED]\n        , IV.[Item Name] AS [Product Name]\n        , H.[Employee Name] AS [Approver Name]\n        , CASE\n            WHEN BV.BOMQTYSERIE = 0 THEN NULL\n            ELSE BV.BOMQTY / BV.BOMQTYSERIE\n          END AS [Conversion Factor]\n        , BV.BOMQTYSERIE AS [Per series]\n        , IV.[Item Type Description]\n    FROM [JetAxDwh].[dbo].[Item_V] IV\n    LEFT JOIN BOM_V BV\n        ON BV.ITEMID = IV.[Item ID]\n       AND BV.DATAAREAID = IV.Company\n    LEFT JOIN BOMVERSION_V BVV\n        ON BV.BOMID = BVV.BOMID\n       AND BVV.DATAAREAID = BV.DATAAREAID\n    LEFT JOIN BOMTABLE_V BT\n        ON BV.BOMID = BT.BOMID\n       AND BT.DATAAREAID = BV.DATAAREAID\n    LEFT JOIN HCMWORKER_V H\n        ON H.RECID = BT.APPROVER\n    WHERE IV.Company = 'rdsi'\n      AND BV.ITEMID IS NOT NULL\n      AND BVV.ACTIVE = 1\n      AND (BVV.TODATE IS NULL OR BVV.TODATE >= CAST(GETDATE() AS date) OR BVV.TODATE = '')\n),\n\ncommoditycode AS (\n    SELECT DISTINCT\n          [INTRACODE]\n        , ITEMID\n    FROM [JetAxDwh].[dbo].[INVENTTABLE_V]\n    WHERE [DATAAREAID] = 'rdsi'\n)\n\nSELECT *\nFROM bom_line a\nLEFT JOIN commoditycode b\nON a.[Line Part] = b.ITEMID",
+    "tablesUsed": ["Item_V", "BOM_V", "BOMVERSION_V", "BOMTABLE_V", "HCMWORKER_V", "INVENTTABLE_V"],
+    "columnsUsed": ["BOMID", "ITEMID", "BOMQTY", "OPRNUM", "UNITID", "DATAAREAID", "NAME", "FROMDATE", "TODATE", "FROMQTY", "ACTIVE", "RECID", "Item Group ID", "PERSONNELNUMBER", "SITEID", "APPROVED", "Item Name", "BOMQTYSERIE", "Item Type Description", "INTRACODE"],
+    "description": "Retrieves Bill of Materials data with active versions, including item details, approver information, and commodity codes. Filters for 'rdsi' company and active BOM versions."
   },
   {
-    "query_name": "Item_V",
-    "data_source": {
+    "queryName": "INVENTTABLE_V",
+    "dataSource": {
       "server": "usmplpwdbs02.rndsystems.com",
       "database": "JetAxDwh"
     },
-    "sql_statement": "SELECT * FROM [JetAxDwh].[dbo].[Item_V] WHERE [Company] = 'rdsi'",
-    "tables_used": [
-      "Item_V"
-    ],
-    "columns_used": [
-      "Item ID",
-      "Item Name",
-      "Buyer Group ID",
-      "Coverage Group ID",
-      "Item Group ID",
-      "Item Group Name",
-      "Shelf Life Days",
-      "Supply Strategy Description",
-      "Supply Strategy Code",
-      "Unit of Measure",
-      "Vendor",
-      "PRIMARYVENDORID",
-      "NAMEALIAS",
-      "PHANTOM",
-      "BOMUNITID",
-      "ABCValue"
-    ],
-    "complexity": "Low (single table query with company filter)",
-    "description": "Core item master data from Dynamics AX. Includes product classifications, ABC segmentation, supply strategy, shelf life, UOM, and primary vendor assignment. Filtered to company 'rdsi' with non-null item names."
+    "sqlStatement": "with commoditycode AS (\n    SELECT DISTINCT\n          [INTRACODE]\n        , ITEMID\n    FROM [JetAxDwh].[dbo].[INVENTTABLE_V]\n    WHERE [DATAAREAID] = 'rdsi'\n)\n\nSELECT *\nFROM commoditycode",
+    "tablesUsed": ["INVENTTABLE_V"],
+    "columnsUsed": ["INTRACODE", "ITEMID", "DATAAREAID"],
+    "description": "Retrieves distinct commodity codes and item IDs from the inventory table for 'rdsi' company."
   },
   {
-    "query_name": "Vendor",
-    "data_source": {
+    "queryName": "Vendor",
+    "dataSource": {
       "server": "usmplpwdbs02.rndsystems.com",
       "database": "JetAxDwh"
     },
-    "sql_statement": "WITH Base AS (\n    SELECT DISTINCT\n        i.[Item ID],\n        i.[Delivery Date],\n        i.[Vendor Account],\n        v.[Name] AS [Vendor Name]\n    FROM [JetAxDwh].[dbo].[Purchase Order Transactions_V] i\n    INNER JOIN [JetAxDwh].[dbo].[Vendor_R] v\n        ON v.[No] = i.[Vendor Account]\n    WHERE i.[Vendor Account] IS NOT NULL\n),\nRankedVendors AS (\n    SELECT\n        [Item ID],\n        [Delivery Date],\n        [Vendor Account],\n        [Vendor Name],\n        ROW_NUMBER() OVER (\n            PARTITION BY [Item ID]\n            ORDER BY [Delivery Date] DESC, [Vendor Account]\n        ) AS rn\n    FROM Base\n    WHERE [Delivery Date] IS NOT NULL\n),\nLatestVendor AS (\n    SELECT\n        [Item ID],\n        [Vendor Account] AS [Latest Vendor Account],\n        [Vendor Name] AS [Latest Vendor Name]\n    FROM RankedVendors\n    WHERE rn = 1\n)\nSELECT distinct\n    b.[Item ID],\n    lv.[Latest Vendor Account],\n    lv.[Latest Vendor Name],\n    b.[Vendor Account],\n    b.[Vendor Name]\nFROM Base b\nLEFT JOIN LatestVendor lv\n    ON b.[Item ID] = lv.[Item ID]\nORDER BY b.[Item ID] DESC",
-    "tables_used": [
-      "Purchase Order Transactions_V",
-      "Vendor_R"
-    ],
-    "columns_used": [
-      "Item ID",
-      "Delivery Date",
-      "Vendor Account",
-      "Vendor Name",
-      "Latest Vendor Account",
-      "Latest Vendor Name"
-    ],
-    "complexity": "Medium (3-level CTE with ROW_NUMBER window function, ranking, and LEFT JOIN)",
-    "description": "Vendor history and current supplier data. Uses window function to rank vendors by most recent delivery date, then returns all historical vendors plus the current (most recent) vendor per item."
+    "sqlStatement": "WITH Base AS (\n    SELECT DISTINCT\n        i.[Item ID],\n        i.[Delivery Date],\n        i.[Vendor Account],\n        v.[Name] AS [Vendor Name]\n    FROM [JetAxDwh].[dbo].[Purchase Order Transactions_V] i\n    INNER JOIN [JetAxDwh].[dbo].[Vendor_R] v\n        ON v.[No] = i.[Vendor Account]\n    WHERE i.[Vendor Account] IS NOT NULL\n),\nRankedVendors AS (\n    SELECT\n        [Item ID],\n        [Delivery Date],\n        [Vendor Account],\n        [Vendor Name],\n        ROW_NUMBER() OVER (\n            PARTITION BY [Item ID]\n            ORDER BY [Delivery Date] DESC, [Vendor Account]\n        ) AS rn\n    FROM Base\n    WHERE [Delivery Date] IS NOT NULL\n),\nLatestVendor AS (\n    SELECT\n        [Item ID],\n        [Vendor Account] AS [Latest Vendor Account],\n        [Vendor Name] AS [Latest Vendor Name]\n    FROM RankedVendors\n    WHERE rn = 1\n)\nSELECT distinct\n    b.[Item ID],\n    lv.[Latest Vendor Account],\n    lv.[Latest Vendor Name],\n    b.[Vendor Account],\n    b.[Vendor Name]\nFROM Base b\nLEFT JOIN LatestVendor lv\n    ON b.[Item ID] = lv.[Item ID]\nORDER BY b.[Item ID] DESC",
+    "tablesUsed": ["Purchase Order Transactions_V", "Vendor_R"],
+    "columnsUsed": ["Item ID", "Delivery Date", "Vendor Account", "Name", "No"],
+    "description": "Retrieves vendor information for items with latest vendor tracking based on most recent delivery date. Uses window functions to rank and identify the most recent vendor per item."
   },
   {
-    "query_name": "Item_V & Intracode",
-    "data_source": {
+    "queryName": "CUSTVENDEXTERNALITEM_V",
+    "dataSource": {
       "server": "usmplpwdbs02.rndsystems.com",
       "database": "JetAxDwh"
     },
-    "sql_statement": "WITH Item_V AS (\n    SELECT\n        IV.[Item ID]\n        , IV.[Item Group ID] AS [Item Group ID]\n        , IV.[Item Name] AS [Product Name]\n        , IV.[Item Type Description]\n        , IV.[Supply Strategy Code]\n        , IV.[Vendor]\n    FROM [JetAxDwh].[dbo].[Item_V] IV\n    WHERE IV.Company = 'rdsi'\n),\n\ncommoditycode AS (\n    SELECT DISTINCT\n          [INTRACODE]\n        , ITEMID\n    FROM [JetAxDwh].[dbo].[INVENTTABLE_V]\n    WHERE [DATAAREAID] = 'rdsi'\n)\n\nSELECT *\nFROM Item_V a\nLEFT JOIN commoditycode b\nON a.[Item ID] = b.ITEMID",
-    "tables_used": [
-      "Item_V",
-      "INVENTTABLE_V"
-    ],
-    "columns_used": [
-      "Item ID",
-      "Item Group ID",
-      "Product Name",
-      "Item Type Description",
-      "Supply Strategy Code",
-      "Vendor",
-      "INTRACODE",
-      "ITEMID"
-    ],
-    "complexity": "Low (2 CTEs with simple LEFT JOIN)",
-    "description": "Item master data enriched with commodity classification codes (intracode). Used for tariff/HS coding, regulatory compliance, and procurement categorization."
+    "sqlStatement": "SELECT [ITEMID]\n      ,[CUSTVENDRELATION]\n      ,[EXTERNALITEMID]\n      ,[ABCCATEGORY]\n  FROM [JetAxDwh].[dbo].[CUSTVENDEXTERNALITEM_V]\n  where dataareaid = 'rdsi'",
+    "tablesUsed": ["CUSTVENDEXTERNALITEM_V"],
+    "columnsUsed": ["ITEMID", "CUSTVENDRELATION", "EXTERNALITEMID", "ABCCATEGORY", "DATAAREAID"],
+    "description": "Retrieves customer/vendor external item mappings and ABC categories for 'rdsi' company."
   },
   {
-    "query_name": "CUSTVENDEXTERNALITEM_V",
-    "data_source": {
+    "queryName": "InvoiceTable",
+    "dataSource": {
       "server": "usmplpwdbs02.rndsystems.com",
       "database": "JetAxDwh"
     },
-    "sql_statement": "SELECT [ITEMID]\n      ,[CUSTVENDRELATION]\n      ,[EXTERNALITEMID]\n      ,[ABCCATEGORY]\n  FROM [JetAxDwh].[dbo].[CUSTVENDEXTERNALITEM_V]\n  where dataareaid = 'rdsi'",
-    "tables_used": [
-      "CUSTVENDEXTERNALITEM_V"
-    ],
-    "columns_used": [
-      "ITEMID",
-      "CUSTVENDRELATION",
-      "EXTERNALITEMID",
-      "ABCCATEGORY"
-    ],
-    "complexity": "Minimal (single table with company filter)",
-    "description": "External item ID mapping for customers/vendors. Maps internal item IDs to external catalog reference numbers and ABC categories for cross-reference and classification."
-  },
-  {
-    "query_name": "InvoiceTable",
-    "data_source": {
-      "server": "usmplpwdbs02.rndsystems.com",
-      "database": "JetAxDwh"
-    },
-    "sql_statement": "SELECT [Account Name]\n      ,[Delivery Name]\n      ,[Item ID]\n  FROM [JetAxDwh].[dbo].[InvoiceTable]\n  WHERE Company = 'rdsi'",
-    "tables_used": [
-      "InvoiceTable"
-    ],
-    "columns_used": [
-      "Account Name",
-      "Delivery Name",
-      "Item ID"
-    ],
-    "complexity": "Minimal (single table with company filter)",
-    "description": "Invoice line items linking items to customer accounts and delivery locations. Provides transactional data for invoice analysis and order-to-cash reporting."
+    "sqlStatement": "SELECT [Account Name]\n      ,[Delivery Name]\n      ,[Item ID]\n  FROM [JetAxDwh].[dbo].[InvoiceTable]\n  WHERE Company = 'rdsi'",
+    "tablesUsed": ["InvoiceTable"],
+    "columnsUsed": ["Account Name", "Delivery Name", "Item ID", "Company"],
+    "description": "Retrieves invoice data including account name, delivery name, and item ID for 'rdsi' company."
   }
 ]

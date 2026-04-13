@@ -67,7 +67,6 @@
 			justify-content: flex-start;
 			align-items: center;
 			gap: 0.6rem;
-			overflow-x: auto;
 			margin-bottom: 1.5rem;
 		}
 
@@ -91,13 +90,14 @@
 			border-color: #0072CE;
 		}
 
+		.search-row {
+			margin-bottom: 1.5rem;
+		}
+
 		#tagSearch {
-			order: 1;
-			margin-left: auto;
 			width: 340px;
-			max-width: 340px;
+			max-width: 100%;
 			min-width: 180px;
-			flex-shrink: 1;
 			border: none;
 			border-bottom: 2px solid #d4d4d4;
 			padding: 0.5rem 0.75rem;
@@ -128,7 +128,7 @@
 			box-shadow: 0 2px 6px rgba(0,0,0,0.05);
 			display: flex;
 			flex-direction: column;
-			justify-content: space-between;
+			justify-content: flex-start;
 			transition: transform .15s ease, box-shadow .15s ease;
 			height: 100%;
 		}
@@ -167,8 +167,13 @@
 			font-size: .75rem;
 		}
 
+		.description-block {
+			min-height: 170px;
+		}
+
 		.sql-details {
-			margin-top: 0.8rem;
+			margin-top: auto;
+			padding-top: 0.8rem;
 		}
 
 		.sql-details summary,
@@ -256,7 +261,7 @@
 			<div class="container">
 				<header>
 					<h2>SQL Queries</h2>
-					<p>Filter by category or search by column!</p>
+					<p>Filter by category or search by column.</p>
 				</header>
 
 				<div class="filters">
@@ -273,7 +278,9 @@
 					<button class="pill" data-filter="Vendor">Vendor</button>
 					<button class="pill" data-filter="Warehouse">Warehouse</button>
 					<button class="pill" data-filter="General">General</button>
+				</div>
 
+				<div class="search-row">
 					<input id="tagSearch" type="text" placeholder="Search by column 🔍" />
 				</div>
 
@@ -365,96 +372,68 @@
 		}
 
 		function inferCategory(query) {
-		if (query.category && String(query.category).trim()) {
-			return query.category;
-		}
+			if (query.category && String(query.category).trim()) {
+				return query.category;
+			}
 
-		const tables = (query.tables_used || []).map(t => String(t).toLowerCase());
+			const tables = (query.tables_used || query.tablesUsed || []).map(t => String(t).toLowerCase());
 
-		if (tables.some(t => t.includes('bom'))) {
-			return 'BOM';
-		}
-		if (tables.some(t => t.includes('cust'))) {
-			return 'Customer';
-		}
-		if (tables.some(t => t.includes('invoice'))) {
-			return 'Invoice';
-		}
-		if (tables.some(t => t.includes('invent'))) {
-			return 'Inventory';
-		}
-		if (tables.some(t => t.includes('item'))) {
-			return 'Item';
-		}
-		if (tables.some(t => t.includes('purchase'))) {
-			return 'Purchase';
-		}
-		if (tables.some(t => t.includes('prod'))) {
-			return 'Production';
-		}
-		if (tables.some(t => t.includes('price'))) {
-			return 'Price';
-		}
-		if (tables.some(t => t.includes('sales'))) {
-			return 'Sales';
-		}
-		if (tables.some(t => t.includes('ship'))) {
-			return 'Shipment';
-		}
-		if (tables.some(t => t.includes('user'))) {
-			return 'User';
-		}
-		if (tables.some(t => t.includes('vendor'))) {
-			return 'Vendor';
-		}
-		if (tables.some(t => t.includes('whs') || t.includes('warehouse'))) {
-			return 'Warehouse';
-		}
+			if (tables.some(t => t.includes('bom'))) return 'BOM';
+			if (tables.some(t => t.includes('cust'))) return 'Customer';
+			if (tables.some(t => t.includes('invoice'))) return 'Invoice';
+			if (tables.some(t => t.includes('invent'))) return 'Inventory';
+			if (tables.some(t => t.includes('item'))) return 'Item';
+			if (tables.some(t => t.includes('purchase'))) return 'Purchase';
+			if (tables.some(t => t.includes('prod'))) return 'Production';
+			if (tables.some(t => t.includes('price'))) return 'Price';
+			if (tables.some(t => t.includes('sales'))) return 'Sales';
+			if (tables.some(t => t.includes('ship'))) return 'Shipment';
+			if (tables.some(t => t.includes('user'))) return 'User';
+			if (tables.some(t => t.includes('vendor'))) return 'Vendor';
+			if (tables.some(t => t.includes('whs') || t.includes('warehouse'))) return 'Warehouse';
 
-		return 'General';
-	}
+			return 'General';
+		}
 
 		function inferTags(query) {
-		if (Array.isArray(query.tags) && query.tags.length) {
-			return uniqueArray(query.tags.map(String));
+			if (Array.isArray(query.tags) && query.tags.length) {
+				return uniqueArray(query.tags.map(String));
+			}
+
+			const tables = (query.tables_used || query.tablesUsed || []).map(t => String(t).toLowerCase());
+			const tags = new Set();
+
+			const addTag = (condition, tag) => {
+				if (condition) tags.add(tag);
+			};
+
+			addTag(tables.some(t => t.includes('bom')), 'BOM');
+			addTag(tables.some(t => t.includes('cust')), 'Customer');
+			addTag(tables.some(t => t.includes('invoice')), 'Invoice');
+			addTag(tables.some(t => t.includes('invent')), 'Inventory');
+			addTag(tables.some(t => t.includes('item')), 'Item');
+			addTag(tables.some(t => t.includes('purchase')), 'Purchase');
+			addTag(tables.some(t => t.includes('prod')), 'Production');
+			addTag(tables.some(t => t.includes('price')), 'Price');
+			addTag(tables.some(t => t.includes('sales')), 'Sales');
+			addTag(tables.some(t => t.includes('ship')), 'Shipment');
+			addTag(tables.some(t => t.includes('user')), 'User');
+			addTag(tables.some(t => t.includes('vendor')), 'Vendor');
+			addTag(tables.some(t => t.includes('whs') || t.includes('warehouse')), 'Warehouse');
+
+			if (tags.size === 0) {
+				tables.forEach(t => {
+					const cleaned = t
+						.replace(/_v$/i, '')
+						.replace(/_r$/i, '')
+						.replace(/_/g, ' ')
+						.trim();
+					if (cleaned) tags.add(cleaned);
+				});
+			}
+
+			return [...tags];
 		}
-
-		const tables = (query.tables_used || []).map(t => String(t).toLowerCase());
-		const tags = new Set();
-
-		const addTag = (condition, tag) => {
-			if (condition) tags.add(tag);
-		};
-
-		addTag(tables.some(t => t.includes('bom')), 'BOM');
-		addTag(tables.some(t => t.includes('cust')), 'Customer');
-		addTag(tables.some(t => t.includes('invoice')), 'Invoice');
-		addTag(tables.some(t => t.includes('invent')), 'Inventory');
-		addTag(tables.some(t => t.includes('item')), 'Item');
-		addTag(tables.some(t => t.includes('purchase')), 'Purchase');
-		addTag(tables.some(t => t.includes('prod')), 'Production');
-		addTag(tables.some(t => t.includes('price')), 'Price');
-		addTag(tables.some(t => t.includes('sales')), 'Sales');
-		addTag(tables.some(t => t.includes('ship')), 'Shipment');
-		addTag(tables.some(t => t.includes('user')), 'User');
-		addTag(tables.some(t => t.includes('vendor')), 'Vendor');
-		addTag(tables.some(t => t.includes('whs')), 'Warehouse');
-		addTag(tables.some(t => t.includes('warehouse')), 'Warehouse');
-
-
-		if (tags.size === 0) {
-			tables.forEach(t => {
-				const cleaned = t
-					.replace(/_v$/i, '')
-					.replace(/_r$/i, '')
-					.replace(/_/g, ' ')
-					.trim();
-				if (cleaned) tags.add(cleaned);
-			});
-		}
-
-		return [...tags];
-	}
 
 		function normalizeQuery(query, index) {
 			return {
@@ -488,7 +467,7 @@
 
 			data.forEach((rawQuery, index) => {
 				const query = normalizeQuery(rawQuery, index);
-				const db = query.data_source.database || 'Unknown DB';
+
 				const server = query.data_source.server || 'Unknown server';
 				const tags = [...new Set(
 					query.tags.filter(
@@ -496,6 +475,7 @@
 					)
 				)];
 				const tablesText = query.tables_used.length ? query.tables_used.join(', ') : 'N/A';
+
 				const previewColumns = query.columns_used.length
 					? query.columns_used.slice(0, 6)
 					: [];
@@ -509,8 +489,8 @@
 				article.dataset.category = query.category;
 				article.dataset.tags = tags.join(',').toLowerCase();
 				article.dataset.search = query.columns_used
-				.map(col => col.replace(/[_\s]/g, '').toLowerCase())
-				.join(' ');
+					.map(col => String(col).replace(/[_\s]/g, '').toLowerCase())
+					.join(' ');
 
 				article.innerHTML = `
 					<h3>${escapeHtml(query.query_name)}</h3>
@@ -520,23 +500,22 @@
 						${tags.map(tag => `<span>${escapeHtml(tag)}</span>`).join('')}
 					</p>
 
-					<p><strong>Description:</strong> ${escapeHtml(query.description)}</p>
+					<div class="description-block">
+						<p><strong>Description:</strong> ${escapeHtml(query.description)}</p>
+					</div>
+
 					<p class="meta-line"><strong>Tables:</strong> ${escapeHtml(tablesText)}</p>
 
 					<div class="meta-line">
 						<strong>Columns:</strong>
 						<span>${escapeHtml(previewColumns.join(', ') || 'N/A')}</span>
-						${moreColumnsCount > 0 ? `
+						${query.columns_used.length > 0 ? `
 							<details class="columns-details" style="margin-top:0.45rem;">
-								<summary>View all columns (+${moreColumnsCount} more)</summary>
+								<summary>View all columns${moreColumnsCount > 0 ? ` (+${moreColumnsCount} more)` : ''}</summary>
 								<div class="column-badges">
 									${allColumnsHtml}
 								</div>
 							</details>
-						` : previewColumns.length ? `
-							<div class="column-badges">
-								${allColumnsHtml}
-							</div>
 						` : ''}
 					</div>
 
@@ -555,10 +534,10 @@
 		function applyFilters() {
 			const active = document.querySelector('.filters .pill.active')?.dataset.filter || '*';
 			const q = (search.value || '')
-			.replace(/[_\s]/g, '')
-			.toLowerCase();
-			const cards = document.querySelectorAll('#queryGrid .card');
+				.replace(/[_\s]/g, '')
+				.toLowerCase();
 
+			const cards = document.querySelectorAll('#queryGrid .card');
 			let visibleCount = 0;
 
 			cards.forEach((card) => {

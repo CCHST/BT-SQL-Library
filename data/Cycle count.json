@@ -1,0 +1,134 @@
+[
+  {
+    "queryName": "Inventory Location",
+    "server": "usmplpwdbs02.rndsystems.com",
+    "database": "JetAxDwh",
+    "tablesUsed": [
+      "INVENTSUM_V",
+      "INVENTDIM_V",
+      "INVENTBATCH_V",
+      "WHSINVENTTABLE_V",
+      "Item_V",
+      "INVENTTABLEMODULE_V",
+      "WMSLOCATION_V"
+    ],
+    "columnsUsed": [
+      "ITEMID",
+      "PHYSICALINVENT",
+      "AVAILPHYSICAL",
+      "RESERVPHYSICAL",
+      "ONORDER",
+      "ORDERED",
+      "INVENTDIMID",
+      "INVENTLOCATIONID",
+      "WMSLOCATIONID",
+      "INVENTSTATUSID",
+      "INVENTBATCHID",
+      "EXPDATE",
+      "PDSBESTBEFOREDATE",
+      "FILTERCODE",
+      "FILTERCODE2_",
+      "FILTERCODE3_",
+      "FILTERCODE4_",
+      "Buyer Group ID",
+      "Item Name",
+      "UNITID",
+      "DATAAREAID",
+      "PARTITION"
+    ],
+    "description": "Complex query retrieving inventory locations and physical inventory data for Lab and Velvet team items. Uses CTEs for item categorization (LabItemList, LabConjItemList) and filters by company 'rdsi'. Excludes specific warehouse locations (BT-Q, BT-DIST, BT-EXP). Assigns team classification based on buyer group and item list membership.",
+    "sqlStatement": "WITH LabItemList AS (...), LabConjItemList AS (...), Inv_location AS (...), WHS_location AS (...) SELECT ... FROM Inv_location LEFT JOIN WHS_location ... WHERE t.Team <> 'Other'"
+  },
+  {
+    "queryName": "Cycle Count",
+    "server": "usmplpwdbs02.rndsystems.com",
+    "database": "JetAxDwh",
+    "tablesUsed": [
+      "Inventory Journal Transactions_V",
+      "Inventory Journal Document_V",
+      "INVENTDIM_V"
+    ],
+    "columnsUsed": [
+      "Journal ID",
+      "Item ID",
+      "Inventory Dimension ID",
+      "Inventory Batch ID",
+      "Transaction Date",
+      "Journal Name",
+      "Company",
+      "WMSLOCATIONID",
+      "INVENTLOCATIONID",
+      "INVENTSTATUSID"
+    ],
+    "description": "Retrieves all inventory cycle count transaction records by joining Journal Transactions with Journal Documents and Inventory Dimensions. Filters for transactions where Journal Name = 'COUNT' and Company = 'rdsi'. Results ordered by Transaction Date descending.",
+    "sqlStatement": "SELECT A.*, B.[Journal Name], C.WMSLOCATIONID, C.INVENTLOCATIONID, C.INVENTSTATUSID FROM [dbo].[Inventory Journal Transactions_V] A LEFT JOIN [dbo].[Inventory Journal Document_V] B ... LEFT JOIN [dbo].[INVENTDIM_V] C ... WHERE B.[Journal Name] = 'COUNT' AND A.Company = 'rdsi' ORDER BY A.[Transaction Date] DESC"
+  },
+  {
+    "queryName": "IM_ItemCost",
+    "server": "ussjopwdbs02.ad.bio-techne.com",
+    "database": "MAS90CBS",
+    "tablesUsed": [
+      "dbo.IM_ItemCost"
+    ],
+    "columnsUsed": [
+      "ItemCode",
+      "LotSerialNo",
+      "WarehouseCode",
+      "ReceiptDate",
+      "TransactionDate",
+      "DateCreated",
+      "DateUpdated",
+      "UDF_EXPIRATION_DATE",
+      "BBD (MAS)"
+    ],
+    "description": "Retrieves item cost records from MAS90CBS ERP system. Filters for warehouse codes 000, C01, C02, C03. Uses Sql.Databases to browse available databases and select MAS90 table. Creates composite ITEM+BATCH key and deduplicates by LotSerialNo.",
+    "sqlStatement": "SELECT * FROM dbo.IM_ItemCost WHERE WarehouseCode IN ('000', 'C01', 'C02', 'C03')"
+  },
+  {
+    "queryName": "Items Recently Moved",
+    "server": "usmplpwdbs02.rndsystems.com",
+    "database": "JetAxDwh",
+    "tablesUsed": [
+      "Inventory Journal Transactions_V",
+      "Inventory Journal Document_V",
+      "Inventory Transactions_V",
+      "INVENTDIM_V"
+    ],
+    "columnsUsed": [
+      "Journal ID",
+      "Journal Name",
+      "Item ID",
+      "Inventory Batch ID",
+      "Inventory Dimension ID",
+      "Inventory Location ID",
+      "Quantity",
+      "Transaction Date",
+      "Posted User ID",
+      "Journal Type",
+      "Posted Y/N",
+      "Description",
+      "Inbound Quantity",
+      "Date Physical",
+      "Transaction Type",
+      "Receipt Status"
+    ],
+    "description": "Complex CTE-based query returns transfer, movement, and purchase order activities from the last 14 days. Filters by specific user list (inventory personnel) and locations (BT, BT-OPS). Company = 'rdsi'. Results ordered by Transaction Date descending.",
+    "sqlStatement": "WITH UserList AS (...), Base AS (...), Classified AS (...), Transfer_and_Movement AS (...), PurchaseOrder AS (...) SELECT * FROM Transfer_and_Movement UNION ALL SELECT * FROM PurchaseOrder ORDER BY [Transaction Date] DESC, ActivityType, [Inventory Location ID], [Item ID], [Inventory Batch ID]"
+  },
+  {
+    "queryName": "INVENTTABLE_V",
+    "server": "usmplpwdbs02.rndsystems.com",
+    "database": "JetAxDwh",
+    "tablesUsed": [
+      "INVENTTABLE_V"
+    ],
+    "columnsUsed": [
+      "ITEMID",
+      "Mass / Volume (UOM)",
+      "Mass / Volume (UOM Clean)",
+      "DATAAREAID"
+    ],
+    "description": "Retrieves unit of measurement and mass/volume information for inventory items. Filters for company 'rdsi'. Removes duplicate rows.",
+    "sqlStatement": "SELECT ITEMID, [Mass / Volume (UOM)], [Mass / Volume (UOM Clean)] FROM [dbo].[INVENTTABLE_V] WHERE [DATAAREAID] = 'rdsi'"
+  }
+]

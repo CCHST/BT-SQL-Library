@@ -379,7 +379,7 @@
 			if (tables.some(t => t.includes('ship'))) return 'Shipment';
 			if (tables.some(t => t.includes('user'))) return 'User';
 			if (tables.some(t => t.includes('vendor'))) return 'Vendor';
-			if (tables.some(t => t.includes('whs') || t.includes('warehouse'))) return 'Warehouse';
+			if (tables.some(t => t.includes('wms') || t.includes('warehouse'))) return 'Warehouse';
 
 			return 'General';
 		}
@@ -526,10 +526,19 @@
 			let visibleCount = 0;
 
 			cards.forEach((card) => {
-				const category = card.dataset.category || '';
+				const category = (card.dataset.category || '').toLowerCase();
+				const tags = (card.dataset.tags || '')
+					.split(',')
+					.map(t => t.trim().toLowerCase())
+					.filter(Boolean);
 				const searchText = card.dataset.search || '';
 
-				const categoryOk = active === '*' || category === active;
+				const activeFilter = active.toLowerCase();
+				const categoryOk =
+					active === '*' ||
+					category === activeFilter ||
+					tags.includes(activeFilter);
+
 				const searchOk = !q || searchText.includes(q);
 
 				const shouldShow = categoryOk && searchOk;

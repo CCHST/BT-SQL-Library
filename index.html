@@ -256,7 +256,7 @@
 			<div class="container">
 				<header>
 					<h2>SQL Queries</h2>
-					<p>Filter by category or search by column 🔍</p>
+					<p>Filter by category or search by column!</p>
 				</header>
 
 				<div class="filters">
@@ -433,7 +433,6 @@
 				sql_statement: query.sql_statement || '',
 				tables_used: Array.isArray(query.tables_used) ? query.tables_used : [],
 				columns_used: Array.isArray(query.columns_used) ? query.columns_used : [],
-				complexity: query.complexity || 'N/A',
 				description: query.description || 'No description provided.'
 			};
 		}
@@ -499,7 +498,6 @@
 						` : ''}
 					</div>
 
-					<p class="meta-line"><strong>Complexity:</strong> ${escapeHtml(query.complexity)}</p>
 					<p class="meta-line"><strong>Server:</strong> ${escapeHtml(server)}</p>
 
 					<details class="sql-details">

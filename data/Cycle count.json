@@ -1,134 +1,57 @@
 [
   {
     "queryName": "Inventory Location",
-    "server": "usmplpwdbs02.rndsystems.com",
-    "database": "JetAxDwh",
-    "tablesUsed": [
-      "INVENTSUM_V",
-      "INVENTDIM_V",
-      "INVENTBATCH_V",
-      "WHSINVENTTABLE_V",
-      "Item_V",
-      "INVENTTABLEMODULE_V",
-      "WMSLOCATION_V"
-    ],
-    "columnsUsed": [
-      "ITEMID",
-      "PHYSICALINVENT",
-      "AVAILPHYSICAL",
-      "RESERVPHYSICAL",
-      "ONORDER",
-      "ORDERED",
-      "INVENTDIMID",
-      "INVENTLOCATIONID",
-      "WMSLOCATIONID",
-      "INVENTSTATUSID",
-      "INVENTBATCHID",
-      "EXPDATE",
-      "PDSBESTBEFOREDATE",
-      "FILTERCODE",
-      "FILTERCODE2_",
-      "FILTERCODE3_",
-      "FILTERCODE4_",
-      "Buyer Group ID",
-      "Item Name",
-      "UNITID",
-      "DATAAREAID",
-      "PARTITION"
-    ],
-    "description": "Complex query retrieving inventory locations and physical inventory data for Lab and Velvet team items. Uses CTEs for item categorization (LabItemList, LabConjItemList) and filters by company 'rdsi'. Excludes specific warehouse locations (BT-Q, BT-DIST, BT-EXP). Assigns team classification based on buyer group and item list membership.",
-    "sqlStatement": "WITH LabItemList AS (...), LabConjItemList AS (...), Inv_location AS (...), WHS_location AS (...) SELECT ... FROM Inv_location LEFT JOIN WHS_location ... WHERE t.Team <> 'Other'"
+    "sqlStatement": "WITH LabItemList AS (\n    SELECT v.ItemID\n    FROM (VALUES\n        ('102508'), ('102509'), ('3010023'), ('3010025'), ('3010058'), ('3010099'), ('3010195'), ('3010197'), ('3010242'), ('3010243'), ('3010389'), ('3010394'), ('3010491'), ('3010510'), ('3010639'), ('3010641'), ('3010642'), ('3010782'), ('3010949'), ('3010985'), ('3011025'), ('3011834'), ('3012456'), ('3013300'), ('3013434'), ('3013699'), ('3018004'), ('3018005'), ('3018009'), ('3023033'), ('3023896'), ('3030012'), ('3030032'), ('3030055'), ('3030090'), ('3030131'), ('3030133'), ('3030149'), ('3030280'), ('3030283'), ('3030455'), ('3030493'), ('3030718'), ('3030972'), ('3031183'), ('3176/5ML'), ('600229'), ('607001'), ('607002'), ('607005'), ('607014'), ('607037'), ('607094'), ('607096'), ('607099'), ('607109'), ('607110'), ('607116'), ('607147'), ('607148'), ('607212'), ('607213'), ('607250'), ('607251'), ('607252'), ('607254'), ('607316'), ('607317'), ('607345'), ('607392'), ('607576'), ('607701'), ('607704'), ('607714'), ('607715'), ('607716'), ('607717'), ('608210'), ('608512'), ('640000')\n    ) v(ItemID)\n),\nLabConjItemList AS (\n    SELECT v.ItemID\n    FROM (VALUES\n        ('674842'), ('680499'), ('698134'), ('698528'), ('680683'), ('673260'), ('670430'), ('565357'), ('680479'), ('672361'), ('670185'), ('670956'), ('672693'), ('675823'), ('698623'), ('670624'), ('676670'), ('680166'), ('670366'), ('680143'), ('674940'), ('672970'), ('680484'), ('672347'), ('568210'), ('670716'), ('680790'), ('670583'), ('679910'), ('672002'), ('680146')\n    ) v(ItemID)\n),\nInv_location AS (\n    SELECT\n        A.ITEMID,\n        SUM(A.PHYSICALINVENT)  AS PHYSICALINVENTORY,\n        SUM(A.AVAILPHYSICAL)   AS AVAILABLEPHYSICAL,\n        SUM(A.RESERVPHYSICAL)  AS RESERVPHYSICAL,\n        SUM(A.ONORDER)         AS ONORDER,\n        SUM(A.ORDERED)         AS ORDERED,\n        A.INVENTDIMID,\n        B.INVENTLOCATIONID,\n        B.WMSLOCATIONID,\n        B.INVENTSTATUSID,\n        B.INVENTBATCHID,\n        C.EXPDATE,\n        C.PDSBESTBEFOREDATE,\n        D.FILTERCODE,\n        E.[Buyer Group ID],\n        E.[Item Name],\n        itm.[UNITID] AS UOM\n    FROM [JetAxDwh].[dbo].[INVENTSUM_V] A\n    LEFT JOIN [INVENTDIM_V] B\n        ON A.INVENTDIMID = B.INVENTDIMID\n       AND A.DATAAREAID = B.DATAAREAID\n       AND A.[PARTITION] = B.[PARTITION]\n    LEFT JOIN [INVENTBATCH_V] C\n        ON A.ITEMID = C.ITEMID\n       AND A.DATAAREAID = C.DATAAREAID\n       AND B.INVENTBATCHID = C.INVENTBATCHID\n       AND B.[PARTITION] = C.[PARTITION]\n    LEFT JOIN [WHSINVENTTABLE_V] D\n        ON A.ITEMID = D.ITEMID\n       AND A.DATAAREAID = D.DATAAREAID\n       AND A.[PARTITION] = D.[PARTITION]\n    LEFT JOIN [Item_V] E\n        ON A.ITEMID = E.[Item ID]\n       AND A.DATAAREAID = E.Company\n       AND A.[PARTITION] = E.[PARTITION]\n    LEFT JOIN INVENTTABLEMODULE_V itm\n    ON E.[Item ID] = itm.ITEMID\n    AND E.Company  = itm.DATAAREAID\n    AND itm.[MODULETYPE] = 0\n    WHERE A.DATAAREAID = 'rdsi'\n    GROUP BY\n        A.ITEMID, A.INVENTDIMID, B.INVENTLOCATIONID, B.WMSLOCATIONID,\n        B.INVENTSTATUSID, B.INVENTBATCHID,\n        C.EXPDATE, C.PDSBESTBEFOREDATE,\n        D.FILTERCODE, E.[Buyer Group ID], E.[Item Name], itm.[UNITID]\n),\nWHS_location AS (\n    SELECT ZONEID, WMSLOCATIONID, INVENTLOCATIONID\n    FROM [WMSLOCATION_V]\n    WHERE DATAAREAID = 'rdsi'\n      AND INVENTLOCATIONID NOT IN ('BT-Q','BT-DIST','BT-EXP')\n)\nSELECT\n    A.*,\n    B.ZONEID,\n    CASE\n        WHEN COALESCE(A.WMSLOCATIONID,'') IN ('PS-REC','REC','FLR','STEM-4','v','FG-RCV','FG-LOST','ac','Albert','AUTO','Cas','CG','DEFAULT','DOCK','GEN','Gs','jf','jm','jw','lw','mdk','ms','Ms','PS-SAREPTA','PS-UTABLE','REC2','RECV','RESERVED','RETAIN','RMA','SHP-SUPPLY','v2', 'Exclude')\n            THEN 'Other'\n        WHEN A.[Buyer Group ID] IN ('P28','P38','P48','P58') THEN 'velvet'\n        WHEN L.ItemID IS NOT NULL THEN 'Lab'\n        WHEN C.ItemID IS NOT NULL THEN 'Lab'\n        ELSE 'Other'\n    END AS Team,\n    CASE\n        WHEN L.ItemID IS NOT NULL THEN 'Lab-James'\n        WHEN C.ItemID IS NOT NULL THEN 'Lab-Christian'\n        ELSE 'Other'\n    END AS LabSplit\nFROM Inv_location A\nLEFT JOIN WHS_location B\n    ON A.WMSLOCATIONID = B.WMSLOCATIONID\n   AND A.INVENTLOCATIONID = B.INVENTLOCATIONID\nLEFT JOIN LabItemList L\n    ON A.ITEMID = L.ItemID\nLEFT JOIN LabConjItemList C\n    ON A.ITEMID = C.ItemID\nWHERE A.INVENTLOCATIONID NOT IN ('BT-DIST','BT-EXP','BT-Q')\n  AND A.Team <> 'Other'",
+    "tablesUsed": ["INVENTSUM_V", "INVENTDIM_V", "INVENTBATCH_V", "WHSINVENTTABLE_V", "Item_V", "INVENTTABLEMODULE_V", "WMSLOCATION_V"],
+    "columnsUsed": ["ITEMID", "PHYSICALINVENT", "AVAILPHYSICAL", "RESERVPHYSICAL", "ONORDER", "ORDERED", "INVENTDIMID", "INVENTLOCATIONID", "WMSLOCATIONID", "INVENTSTATUSID", "INVENTBATCHID", "EXPDATE", "PDSBESTBEFOREDATE", "FILTERCODE", "Buyer Group ID", "Item Name", "UNITID", "DATAAREAID", "PARTITION", "ZONEID"],
+    "dataSource": {
+      "server": "usmplpwdbs02.rndsystems.com",
+      "database": "JetAxDwh"
+    },
+    "description": "Complex query retrieving inventory locations and physical inventory data for Lab and Velvet team items. Uses CTEs for item categorization and filters by company 'rdsi'. Assigns team classification based on buyer group and item list membership."
   },
   {
     "queryName": "Cycle Count",
-    "server": "usmplpwdbs02.rndsystems.com",
-    "database": "JetAxDwh",
-    "tablesUsed": [
-      "Inventory Journal Transactions_V",
-      "Inventory Journal Document_V",
-      "INVENTDIM_V"
-    ],
-    "columnsUsed": [
-      "Journal ID",
-      "Item ID",
-      "Inventory Dimension ID",
-      "Inventory Batch ID",
-      "Transaction Date",
-      "Journal Name",
-      "Company",
-      "WMSLOCATIONID",
-      "INVENTLOCATIONID",
-      "INVENTSTATUSID"
-    ],
-    "description": "Retrieves all inventory cycle count transaction records by joining Journal Transactions with Journal Documents and Inventory Dimensions. Filters for transactions where Journal Name = 'COUNT' and Company = 'rdsi'. Results ordered by Transaction Date descending.",
-    "sqlStatement": "SELECT A.*, B.[Journal Name], C.WMSLOCATIONID, C.INVENTLOCATIONID, C.INVENTSTATUSID FROM [dbo].[Inventory Journal Transactions_V] A LEFT JOIN [dbo].[Inventory Journal Document_V] B ... LEFT JOIN [dbo].[INVENTDIM_V] C ... WHERE B.[Journal Name] = 'COUNT' AND A.Company = 'rdsi' ORDER BY A.[Transaction Date] DESC"
+    "sqlStatement": "SELECT\n    A.*,\n    B.[Journal Name],\n    C.WMSLOCATIONID,\n    C.INVENTLOCATIONID,\n    C.INVENTSTATUSID\nFROM [dbo].[Inventory Journal Transactions_V] A\nLEFT JOIN [dbo].[Inventory Journal Document_V] B\n    ON A.[Journal ID] = B.[Journal ID]\n    AND A.Company = B.Company\nLEFT JOIN [dbo].[INVENTDIM_V] C\n    ON A.[Inventory Dimension ID] = C.INVENTDIMID\n    AND A.[Inventory Batch ID] = C.[INVENTBATCHID]\n    AND A.Company = C.DATAAREAID\nWHERE\n    B.[Journal Name] = 'COUNT'\n    AND A.Company = 'rdsi'\nORDER BY\n    A.[Transaction Date] DESC",
+    "tablesUsed": ["Inventory Journal Transactions_V", "Inventory Journal Document_V", "INVENTDIM_V"],
+    "columnsUsed": ["Journal ID", "Item ID", "Inventory Dimension ID", "Inventory Batch ID", "Transaction Date", "Journal Name", "Company", "WMSLOCATIONID", "INVENTLOCATIONID", "INVENTSTATUSID", "INVENTDIMID"],
+    "dataSource": {
+      "server": "usmplpwdbs02.rndsystems.com",
+      "database": "JetAxDwh"
+    },
+    "description": "Retrieves all inventory cycle count transaction records by joining Journal Transactions with Journal Documents and Inventory Dimensions. Filters for transactions where Journal Name = 'COUNT' and Company = 'rdsi'. Results ordered by Transaction Date descending."
   },
   {
     "queryName": "IM_ItemCost",
-    "server": "ussjopwdbs02.ad.bio-techne.com",
-    "database": "MAS90CBS",
-    "tablesUsed": [
-      "dbo.IM_ItemCost"
-    ],
-    "columnsUsed": [
-      "ItemCode",
-      "LotSerialNo",
-      "WarehouseCode",
-      "ReceiptDate",
-      "TransactionDate",
-      "DateCreated",
-      "DateUpdated",
-      "UDF_EXPIRATION_DATE",
-      "BBD (MAS)"
-    ],
-    "description": "Retrieves item cost records from MAS90CBS ERP system. Filters for warehouse codes 000, C01, C02, C03. Uses Sql.Databases to browse available databases and select MAS90 table. Creates composite ITEM+BATCH key and deduplicates by LotSerialNo.",
-    "sqlStatement": "SELECT * FROM dbo.IM_ItemCost WHERE WarehouseCode IN ('000', 'C01', 'C02', 'C03')"
+    "sqlStatement": "SELECT *\nFROM MAS90CBS.dbo.IM_ItemCost\nWHERE WarehouseCode IN ('000', 'C01', 'C02', 'C03')",
+    "tablesUsed": ["IM_ItemCost"],
+    "columnsUsed": ["ItemCode", "LotSerialNo", "WarehouseCode", "ReceiptDate", "TransactionDate", "DateCreated", "DateUpdated", "UDF_EXPIRATION_DATE", "BBD (MAS)"],
+    "dataSource": {
+      "server": "ussjopwdbs02.ad.bio-techne.com",
+      "database": "MAS90CBS"
+    },
+    "description": "Retrieves item cost records from MAS90CBS ERP system. Filters for warehouse codes 000, C01, C02, C03. Creates composite ITEM+BATCH key and deduplicates by LotSerialNo."
   },
   {
     "queryName": "Items Recently Moved",
-    "server": "usmplpwdbs02.rndsystems.com",
-    "database": "JetAxDwh",
-    "tablesUsed": [
-      "Inventory Journal Transactions_V",
-      "Inventory Journal Document_V",
-      "Inventory Transactions_V",
-      "INVENTDIM_V"
-    ],
-    "columnsUsed": [
-      "Journal ID",
-      "Journal Name",
-      "Item ID",
-      "Inventory Batch ID",
-      "Inventory Dimension ID",
-      "Inventory Location ID",
-      "Quantity",
-      "Transaction Date",
-      "Posted User ID",
-      "Journal Type",
-      "Posted Y/N",
-      "Description",
-      "Inbound Quantity",
-      "Date Physical",
-      "Transaction Type",
-      "Receipt Status"
-    ],
-    "description": "Complex CTE-based query returns transfer, movement, and purchase order activities from the last 14 days. Filters by specific user list (inventory personnel) and locations (BT, BT-OPS). Company = 'rdsi'. Results ordered by Transaction Date descending.",
-    "sqlStatement": "WITH UserList AS (...), Base AS (...), Classified AS (...), Transfer_and_Movement AS (...), PurchaseOrder AS (...) SELECT * FROM Transfer_and_Movement UNION ALL SELECT * FROM PurchaseOrder ORDER BY [Transaction Date] DESC, ActivityType, [Inventory Location ID], [Item ID], [Inventory Batch ID]"
+    "sqlStatement": "WITH UserList AS (\n    SELECT UPPER('Logan.Ky')   AS PostedUserID UNION ALL\n    SELECT UPPER('adam.ols')               UNION ALL\n    SELECT UPPER('Zakkary.')                 UNION ALL\n    SELECT UPPER('salkowfr')               UNION ALL\n    SELECT UPPER('Travis.R')              UNION ALL\n    SELECT UPPER('Coryg')                  UNION ALL\n    SELECT UPPER('winterle')              UNION ALL\n    SELECT UPPER('Alex.Car')             UNION ALL\n    SELECT UPPER('Alexand3')            UNION ALL\n    SELECT UPPER('Brennen.')              UNION ALL\n    SELECT UPPER('David.Hu')              UNION ALL\n    SELECT UPPER('Jamiek')                UNION ALL\n    SELECT UPPER('Jordan.1')               UNION ALL\n    SELECT UPPER('Liisa.Je')               UNION ALL\n    SELECT UPPER('Michae10')             UNION ALL\n    SELECT UPPER('Nick.Sly')              UNION ALL\n    SELECT UPPER('Sam.McNu')              UNION ALL\n    SELECT UPPER('Shanika.')\n),\nBase AS (\n    SELECT\n        A.[Journal ID],\n        B.[Journal Name],\n        B.[Journal Name Description],\n        B.[Journal Type],\n        B.[Posted Y/N],\n        B.Description,\n        A.[Item ID],\n        A.[Inventory Batch ID],\n        A.[Inventory Dimension ID],\n        A.[Inventory Location ID],\n        A.Quantity,\n        A.[Transaction Date],\n        A.[Posted User ID]\n    FROM dbo.[Inventory Journal Transactions_V] A\n    LEFT JOIN dbo.[Inventory Journal Document_V] B\n           ON A.[Journal ID] = B.[Journal ID]\n          AND A.Company      = B.Company\n    WHERE\n        A.Company = 'rdsi'\n        AND UPPER(LTRIM(RTRIM(COALESCE(B.[Posted Y/N], '')))) IN ('YES','Y','TRUE','1')\n        AND A.[Transaction Date] >= DATEADD(DAY, -14, CONVERT(date, GETDATE()))\n),\nClassified AS (\n    SELECT\n        *,\n        CASE\n            WHEN [Journal Type] = 'Transfer' THEN 'TRANSFER'\n            WHEN [Journal Type] = 'Movement' THEN 'MOVEMENT'\n            ELSE 'OTHER'\n        END AS ActivityType\n    FROM Base\n),\nTransfer_and_Movement AS (\n    SELECT\n        ActivityType,\n        [Item ID],\n        [Journal ID],\n        [Journal Name],\n        [Journal Name Description],\n        [Journal Type],\n        [Posted Y/N],\n        Description,\n        [Inventory Batch ID],\n        [Inventory Dimension ID],\n        [Inventory Location ID],\n        Quantity,\n        CAST([Transaction Date] AS datetime) AS [Transaction Date],\n        [Posted User ID]\n    FROM Classified R\n    JOIN UserList U\n      ON UPPER(LTRIM(RTRIM(R.[Posted User ID]))) = U.PostedUserID\n    WHERE\n        ActivityType IN ('TRANSFER','MOVEMENT')\n        AND R.[Inventory Location ID] IN ('BT','BT-OPS')\n),\nPurchaseOrder AS (\n    SELECT\n        'PURCHASE_ORDER' AS ActivityType,\n        A.[Item ID] AS [Item ID],\n        CAST(NULL AS varchar(50))  AS [Journal ID],\n        CAST(NULL AS varchar(50))  AS [Journal Name],\n        CAST(NULL AS varchar(200)) AS [Journal Name Description],\n        CAST(NULL AS varchar(50))  AS [Journal Type],\n        CAST(NULL AS varchar(10))  AS [Posted Y/N],\n        CAST(NULL AS varchar(500)) AS [Description],\n        D.INVENTBATCHID            AS [Inventory Batch ID],\n        A.[INVENTDIMID]            AS [Inventory Dimension ID],\n        A.[Inventory Location ID]  AS [Inventory Location ID],\n        CAST(A.[Inbound Quantity] AS decimal(18,6)) AS Quantity,\n        CAST(A.[Date Physical]    AS datetime)      AS [Transaction Date],\n        CAST(NULL AS varchar(50)) AS [Posted User ID]\n    FROM [JetAxDwh].[dbo].[Inventory Transactions_V] A\n    LEFT JOIN dbo.INVENTDIM_V D\n      ON D.INVENTDIMID = A.INVENTDIMID\n     AND D.DATAAREAID  = A.[Company]\n    WHERE\n        A.Company = 'rdsi'\n        AND A.[Inventory Location ID] IN ('BT','BT-OPS')\n        AND A.[Transaction Type] = 3\n        AND A.[Receipt Status]   = 2\n        AND COALESCE(A.[Inbound Quantity],0) > 0\n        AND A.[Date Physical] >= DATEADD(DAY, -14, CONVERT(date, GETDATE()))\n)\nSELECT *\nFROM Transfer_and_Movement\nUNION ALL\nSELECT *\nFROM PurchaseOrder\nORDER BY\n    [Transaction Date] DESC,\n    ActivityType,\n    [Inventory Location ID],\n    [Item ID],\n    [Inventory Batch ID]",
+    "tablesUsed": ["Inventory Journal Transactions_V", "Inventory Journal Document_V", "Inventory Transactions_V", "INVENTDIM_V"],
+    "columnsUsed": ["Journal ID", "Journal Name", "Item ID", "Inventory Batch ID", "Inventory Dimension ID", "Inventory Location ID", "Quantity", "Transaction Date", "Posted User ID", "Journal Type", "Posted Y/N", "Description", "Inbound Quantity", "Date Physical", "Transaction Type", "Receipt Status", "INVENTDIMID", "DATAAREAID"],
+    "dataSource": {
+      "server": "usmplpwdbs02.rndsystems.com",
+      "database": "JetAxDwh"
+    },
+    "description": "Complex CTE-based query returns transfer, movement, and purchase order activities from the last 14 days. Filters by specific user list (inventory personnel) and locations (BT, BT-OPS). Company = 'rdsi'. Results ordered by Transaction Date descending."
   },
   {
     "queryName": "INVENTTABLE_V",
-    "server": "usmplpwdbs02.rndsystems.com",
-    "database": "JetAxDwh",
-    "tablesUsed": [
-      "INVENTTABLE_V"
-    ],
-    "columnsUsed": [
-      "ITEMID",
-      "Mass / Volume (UOM)",
-      "Mass / Volume (UOM Clean)",
-      "DATAAREAID"
-    ],
-    "description": "Retrieves unit of measurement and mass/volume information for inventory items. Filters for company 'rdsi'. Removes duplicate rows.",
-    "sqlStatement": "SELECT ITEMID, [Mass / Volume (UOM)], [Mass / Volume (UOM Clean)] FROM [dbo].[INVENTTABLE_V] WHERE [DATAAREAID] = 'rdsi'"
+    "sqlStatement": "SELECT ITEMID,\n  [Mass / Volume (UOM)],\n  [Mass / Volume (UOM Clean)]\nFROM [dbo].[INVENTTABLE_V]\nWHERE [DATAAREAID] = 'rdsi'",
+    "tablesUsed": ["INVENTTABLE_V"],
+    "columnsUsed": ["ITEMID", "Mass / Volume (UOM)", "Mass / Volume (UOM Clean)", "DATAAREAID"],
+    "dataSource": {
+      "server": "usmplpwdbs02.rndsystems.com",
+      "database": "JetAxDwh"
+    },
+    "description": "Retrieves unit of measurement and mass/volume information for inventory items. Filters for company 'rdsi'. Removes duplicate rows."
   }
 ]

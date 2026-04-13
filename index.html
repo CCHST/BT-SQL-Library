@@ -374,13 +374,13 @@
 		if (tables.some(t => t.includes('bom'))) {
 			return 'BOM';
 		}
-		if (tables.some(t => t.includes('cust') || t.includes('customer'))) {
+		if (tables.some(t => t.includes('cust'))) {
 			return 'Customer';
 		}
 		if (tables.some(t => t.includes('invoice'))) {
 			return 'Invoice';
 		}
-		if (tables.some(t => t.includes('invent') || t.includes('inventory'))) {
+		if (tables.some(t => t.includes('invent'))) {
 			return 'Inventory';
 		}
 		if (tables.some(t => t.includes('item'))) {
@@ -398,7 +398,7 @@
 		if (tables.some(t => t.includes('sales'))) {
 			return 'Sales';
 		}
-		if (tables.some(t => t.includes('shipment')|| t.includes('ship'))) {
+		if (tables.some(t => t.includes('ship'))) {
 			return 'Shipment';
 		}
 		if (tables.some(t => t.includes('user'))) {
@@ -428,16 +428,13 @@
 
 		addTag(tables.some(t => t.includes('bom')), 'BOM');
 		addTag(tables.some(t => t.includes('cust')), 'Customer');
-		addTag(tables.some(t => t.includes('customer')), 'Customer');
 		addTag(tables.some(t => t.includes('invoice')), 'Invoice');
 		addTag(tables.some(t => t.includes('invent')), 'Inventory');
-		addTag(tables.some(t => t.includes('inventory')), 'Inventory');
 		addTag(tables.some(t => t.includes('item')), 'Item');
 		addTag(tables.some(t => t.includes('purchase')), 'Purchase');
 		addTag(tables.some(t => t.includes('prod')), 'Production');
 		addTag(tables.some(t => t.includes('price')), 'Price');
 		addTag(tables.some(t => t.includes('sales')), 'Sales');
-		addTag(tables.some(t => t.includes('shipment')), 'Shipment');
 		addTag(tables.some(t => t.includes('ship')), 'Shipment');
 		addTag(tables.some(t => t.includes('user')), 'User');
 		addTag(tables.some(t => t.includes('vendor')), 'Vendor');

@@ -306,7 +306,7 @@
 
 			const results = await Promise.all(
 				files.map(async (file) => {
-					const res = await fetch(`data/${file}`);
+					const res = await fetch(`data queries/${file}`);
 					if (!res.ok) {
 						throw new Error(`Failed to load data/${file}`);
 					}

@@ -1,0 +1,145 @@
+[
+  {
+    "queryName": "Item_V",
+    "sqlStatement": "WITH RankedItems AS (\n  SELECT *,\n    ROW_NUMBER() OVER (PARTITION BY [Item ID] ORDER BY [Mass Volume Size]) AS rn\n  FROM [JetAxDwh].[dbo].[Item_V]\n  WHERE Company = 'rdsi'\n)\nSELECT\n  ri.[Company], ri.[Buyer Group ID], ri.[Coverage Group ID], ri.[Dim Brand Name], ri.[Dim Business Unit Name],\n  ri.[Dim Product Type Code], ri.[Item Group ID], ri.[Item Group Name], ri.[Item ID],\n  pot.[External Part No], itm.UNITID AS 'UOM', ri.[Item Name], ri.[Item Type Description],\n  ri.[Mass Volume Size], ri.[Mass Volume UOM], ri.[Master Code],\n  CASE WHEN ri.ABCRevenueEnum = 3 THEN 'C' WHEN ri.ABCRevenueEnum = 2 THEN 'B' WHEN ri.ABCRevenueEnum = 1 THEN 'A' ELSE '0' END AS 'ABC',\n  ri.[Shelf Life Days], ri.[Stopped], ri.[Supply Strategy Code] AS 'MTO/MTS', ri.[Supply Strategy Description],\n  ri.[Unit of Measure], ri.[Unit Current Retail Price], ri.[Unit Price], ri.[Vendor], ri.[PRIMARYVENDORID],\n  ri.[WebActive], ri.[Current Retail Price], ri.[NAMEALIAS], ri.[BATCHNUMGROUPID], ri.[PDSSHELFADVICE],\n  ri.[PDSBESTBEFORE], ri.[COSTGROUPID], ri.[ITEMDIMCOSTPRICE], ri.[BOMUNITID], ri.[INTRACODE],\n  ri.[PDSVendorCheckItem], ri.[PMFPRODUCTTYPE], ri.[ORIGCOUNTRYREGIONID], ri.[BOMCALCGROUPID],\n  CASE WHEN ri.[Item Group ID] LIKE 'FG%' THEN 'FG' WHEN ri.[Item Group ID] LIKE 'INT%' THEN 'INT' WHEN ri.[Item Group ID] LIKE 'FRT%' THEN 'FRT' WHEN ri.[Item Group ID] LIKE 'RM%' THEN 'RM' ELSE ri.[Item Group ID] END AS 'Consolidated Item Group',\n  CASE WHEN ri.[Item Group Name] LIKE '%Intermediate - Plate%' THEN 'ASD Make' WHEN ri.[Item Group Name] LIKE '%Intermediate - Diluent%' THEN 'ASD Make' WHEN ri.[Item Group Name] LIKE '%Intermediate - Conj%' THEN 'ASD Make' WHEN ri.[Item Group Name] LIKE '%Intermediate - Standard%' THEN 'ASD Make' WHEN ri.[Item Group Name] LIKE '%Intermediate - Array%' THEN 'ASD Make' WHEN ri.[Item Group Name] LIKE '%Intermediate - Det%' THEN 'ASD Make' WHEN ri.[Item Group Name] LIKE '%Intermediate - Particle%' THEN 'ASD Make' WHEN ri.[Item Group Name] LIKE '%Intermediate - Control%' THEN 'ASD Make' WHEN ri.[Item Group Name] LIKE '%Intermediate - Access%' THEN 'ASD Make' WHEN ri.[Item Group Name] LIKE '%Intermediate - Capture%' THEN 'ASD Make' WHEN ri.[Item Group Name] LIKE '%FinGds - Duoset%' THEN 'ASD Make' WHEN ri.[Item Group Name] LIKE '%FinGds - Multiplex%' THEN 'ASD Make' WHEN ri.[Item Group Name] LIKE '%FinGds - ELISA%' THEN 'ASD Make' ELSE 'Other' END AS 'ASD Make Item Group',\n  CASE WHEN ri.[Stopped] = 'Yes' THEN 'Inactive' WHEN ri.[Buyer Group ID] = 'P99' THEN 'Inactive' WHEN ri.[Buyer Group ID] = 'P98' THEN 'Inactive' ELSE 'Active' END AS 'Active/Inactive',\n  CASE WHEN it.PHANTOM = 0 THEN 'No' WHEN it.PHANTOM = 1 THEN 'Yes' END AS 'Phantom',\n  it.PDSSHELFLIFE\nFROM RankedItems ri\nLEFT JOIN INVENTTABLEMODULE_V itm ON ri.[Item ID] = itm.ITEMID AND ri.Company = itm.DATAAREAID\nLEFT JOIN [Purchase Order Transactions_V] pot ON ri.[Item ID] = pot.[Item ID] AND ri.PRIMARYVENDORID = pot.[Vendor Account]\nLEFT JOIN INVENTTABLE_V it ON ri.[Item ID] = it.ITEMID AND ri.Company = it.DATAAREAID\nWHERE rn=1 AND itm.MODULETYPE = 2",
+    "tablesUsed": ["Item_V", "INVENTTABLEMODULE_V", "Purchase Order Transactions_V", "INVENTTABLE_V"],
+    "columnsUsed": ["Company", "Buyer Group ID", "Coverage Group ID", "Dim Brand Name", "Dim Business Unit Name", "Dim Product Type Code", "Item Group ID", "Item Group Name", "Item ID", "External Part No", "UNITID", "Item Name", "Item Type Description", "Mass Volume Size", "Mass Volume UOM", "Master Code", "ABCRevenueEnum", "Shelf Life Days", "Stopped", "Supply Strategy Code", "Supply Strategy Description", "Unit of Measure", "Unit Current Retail Price", "Unit Price", "Vendor", "PRIMARYVENDORID", "WebActive", "Current Retail Price", "NAMEALIAS", "BATCHNUMGROUPID", "PDSSHELFADVICE", "PDSBESTBEFORE", "COSTGROUPID", "ITEMDIMCOSTPRICE", "BOMUNITID", "INTRACODE", "PDSVendorCheckItem", "PMFPRODUCTTYPE", "ORIGCOUNTRYREGIONID", "BOMCALCGROUPID", "PHANTOM", "PDSSHELFLIFE"],
+    "dataSource": {
+      "server": "usmplpwdbs02.rndsystems.com",
+      "database": "JetAxDwh"
+    },
+    "description": "Retrieves comprehensive inventory/item master data with ABC classification, supply strategy, and pricing information. Filters for company 'rdsi' and performs deduplication on Item ID with row numbering."
+  },
+  {
+    "queryName": "Inventory Transactions_V",
+    "sqlStatement": "SELECT\n  it.[RECID], it.[Company], it.[Item ID], it.[Transaction Type],\n  it.[Inventory Location ID], it.[Date Physical], it.[Issue Status],\n  it.[Receipt Status], it.[Outbound Quantity],\n  ito.[REFERENCEID], ijd.[Journal Name],\n  ijd.[Journal Name Description]\nFROM [dbo].[Inventory Transactions_V] it\nLEFT JOIN [dbo].[Inventory Trans Origin_V] ito\n  ON it.[INVENTTRANSORIGIN] = ito.[RECID]\n  AND it.[Company] = ito.[DATAAREAID]\nLEFT JOIN [dbo].[Inventory Journal Document_V] ijd\n  ON ito.[REFERENCEID] = ijd.[Journal ID]\n  AND ito.[DATAAREAID] = ijd.[Company]\nWHERE it.[Company] = 'rdsi'\n  AND it.[Transaction Type] IN (0, 4, 8)\n  AND it.[Inventory Location ID] IN ('BT', 'bt', 'BT-OPS')\n  AND it.[Date Physical] >= '2024-01-01'\n  AND (\n    ijd.[Journal ID] IS NULL\n    OR NOT (\n      ijd.[Company] = 'rdsi'\n      AND ((ijd.[Journal Name] = '5503000' AND ijd.[Journal Name Description] LIKE '%Scrapped Inventory (AX) - Raw Materials%')\n           OR (ijd.[Journal Name] = '5503001' AND ijd.[Journal Name Description] LIKE '%Scrapped Inventory (AX)-Finished Goods%')\n           OR (ijd.[Journal Name] = '5503002' AND ijd.[Journal Name Description] LIKE '%Scrapped Inventory (AX)-Intermediates%')\n           OR (ijd.[Journal Name] = '5503005' AND ijd.[Journal Name Description] LIKE '%Scrapped Inventory (AX) Shipping Packaging%')\n           OR (ijd.[Journal Name] = '5503020' AND ijd.[Journal Name Description] LIKE '%Obsolete (AX) - Raw Materials%')\n           OR (ijd.[Journal Name] = '5503021' AND ijd.[Journal Name Description] LIKE '%Obsolete (AX) - Finished Goods%')\n           OR (ijd.[Journal Name] = '5503022' AND ijd.[Journal Name Description] LIKE '%Obsolete (AX) - Intermediates%'))\n    )\n  )\nORDER BY it.[Date Physical] DESC",
+    "tablesUsed": ["Inventory Transactions_V", "Inventory Trans Origin_V", "Inventory Journal Document_V"],
+    "columnsUsed": ["RECID", "Company", "Item ID", "Transaction Type", "Inventory Location ID", "Date Physical", "Issue Status", "Receipt Status", "Outbound Quantity", "INVENTTRANSORIGIN", "REFERENCEID", "Journal Name", "Journal Name Description", "DATAAREAID"],
+    "dataSource": {
+      "server": "usmplpwdbs02.rndsystems.com",
+      "database": "JetAxDwh"
+    },
+    "description": "Retrieves 12-month rolling inventory transactions for planning purposes. Filters company 'rdsi', transaction types 0/4/8 (Sales Order/Transactions/Production Line), locations BT/BT-OPS, excludes scrapped/obsolete inventory through journal filtering, sorted by date descending."
+  },
+  {
+    "queryName": "BTOnHandInventoryView_V",
+    "sqlStatement": "SELECT BT.[ITEMGROUPID], BT.[ITEMID], BT.[INVENTSTATUSID], BT.[PDSSHELFLIFE], BT.[REQGROUPID],\n  BT.[INVENTBATCHID], BT.[BESTBEFOREDATE], BT.[EXPDATE], BT.[BTMASSVOLUMEUOM],\n  BT.[BTMASSVOLUME], BT.[STOPPED], BT.[ITEMDATAAREAID], BT.[INVENTSITEID],\n  BT.[INVENTLOCATIONID], BT.[DISPOSITION], BT.[PHYSICALINVENTORY],\n  BT.[ORDEREDINTOTAL], BT.[AVAILABLEPHYSICAL], BT.[RESERVPHYSICAL], BT.[ONORDER],\n  it.[ITEMBUYERGROUPID]\nFROM [JetAxDwh].[dbo].[BTOnHandInventoryView_V] BT\nINNER JOIN [JetAxDwh].[dbo].[INVENTTABLE_V] AS it\n  ON BT.[ITEMID] = it.[ITEMID]\n  AND BT.[ITEMDATAAREAID] = it.[DATAAREAID]\nWHERE BT.[ITEMDATAAREAID] = 'rdsi'\n  AND BT.[INVENTLOCATIONID] IN('BT','BT-OPS','BT-STORES','CCD','CCD-OPS')\n  AND [EXPDATE] >= GETDATE()\nUNION\nSELECT NULL, s.[ITEMID], NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,\n  s.[DATAAREAID], NULL, NULL, NULL, s.[PHYSICALINVENTORY], s.[ORDEREDINTOTAL],\n  s.[AVAILABLEPHYSICAL], s.[RESERVPHYSICAL], s.[ONORDER], NULL\nFROM (SELECT [ITEMID], [DATAAREAID], sum([AVAILPHYSICAL]), sum([PHYSICALINVENT]),\n  sum([RESERVPHYSICAL]), sum([ONORDER]), sum([ORDERED])\n  FROM [JetAxDwh].[dbo].[INVENTSUM_V]\n  WHERE [DATAAREAID]='rdsi'\n  GROUP BY [ITEMID], [DATAAREAID]) s\nLEFT JOIN (SELECT * FROM [JetAxDwh].[dbo].[BTOnHandInventoryView_V]\n  WHERE [ITEMDATAAREAID] = 'rdsi') b\n  ON s.ITEMID = b.ITEMID\nWHERE b.ITEMID IS NULL",
+    "tablesUsed": ["BTOnHandInventoryView_V", "INVENTTABLE_V", "INVENTSUM_V"],
+    "columnsUsed": ["ITEMGROUPID", "ITEMID", "INVENTSTATUSID", "PDSSHELFLIFE", "REQGROUPID", "INVENTBATCHID", "BESTBEFOREDATE", "EXPDATE", "BTMASSVOLUMEUOM", "BTMASSVOLUME", "STOPPED", "ITEMDATAAREAID", "INVENTSITEID", "INVENTLOCATIONID", "DISPOSITION", "PHYSICALINVENTORY", "ORDEREDINTOTAL", "AVAILABLEPHYSICAL", "RESERVPHYSICAL", "ONORDER", "ITEMBUYERGROUPID", "DATAAREAID", "AVAILPHYSICAL"],
+    "dataSource": {
+      "server": "usmplpwdbs02.rndsystems.com",
+      "database": "JetAxDwh"
+    },
+    "description": "Combines batch-controlled inventory from BTOnHandInventoryView with inventory summary (INVENTSUM) for non-batch controlled items. Filters company 'rdsi', locations BT/BT-OPS/BT-STORES/CCD, excludes expired items (EXPDATE >= today)."
+  },
+  {
+    "queryName": "ProdBom_V",
+    "sqlStatement": "SELECT [DW_Id], [PRODID], [LINENUM], [PRODLINETYPE], [BOMCONSUMP], [ITEMID], [BOMQTY],\n  [CONSTANT], [ROUNDUP], [ROUNDUPQTY], [OPRNUM], [QTYBOMCALC], [REMAINBOMPHYSICAL],\n  [QTYINVENTCALC], [RAWMATERIALDATE], [REMAININVENTPHYSICAL], [INVENTREFTYPE],\n  [INVENTREFID], [UNITID], [QTYINVENTSTUP], [QTYBOMSTUP], [BOMID], [FORMULA],\n  [BOMREFRECID], [BOMQTYSERIE], [ITEMROUTEID], [ITEMBOMID], [INVENTDIMID],\n  [REQPOID], [REQPLANIDSCHED], [RAWMATERIALTIME], [SCRAPVAR], [SCRAPCONST],\n  [CONSTANTRELEASED], [ENDCONSUMP], [ENDSCHEDCONSUMP], [PROJCATEGORYID],\n  [ACTIVITYNUMBER], [DEFAULTDIMENSION], [PROJTRANSID], [PROJTRANSDATE],\n  [PROJLINEPROPERTYID], [PROJCOSTPRICE], [PROJCOSTAMOUNT], [PROJSALESCURRENCYID],\n  [PROJSALESPRICE], [PROJTAXGROUPID], [PROJTAXITEMGROUPID], [PROJID],\n  [PROJSETSUBPRODTOCONSUMED], [PRICE_RU], [PRICEUNIT_RU], [LINEAMOUNT_RU],\n  [PDSBASEVALUE], [PDSCWINVENTCALC], [PDSCWINVENTSTUP], [PDSCWQTY],\n  [PDSCWREMAINFINANCIAL], [PDSCWREMAINPHYSICAL], [PDSINGREDIENTTYPE],\n  [PDSINHERITCOPRODUCTBATCHATTRIB], [PDSINHERITCOPRODUCTSHELFLIFE],\n  [PDSINHERITENDITEMBATCHATTRIB], [PDSINHERITENDITEMSHELFLIFE], [PMFFORMULAPCT],\n  [PMFPCTENABLE], [PMFQTYWITHOUTYIELD], [PMFSCALABLE], [DATAAREAID],\n  [RECVERSION], [PARTITION], [RECID], [DW_Batch], [DW_SourceCode], [DW_TimeStamp]\nFROM [JetAxDwh].[dbo].[ProdBom_V]\nWHERE DATAAREAID = 'rdsi'\n  AND REMAINBOMPHYSICAL <> 0",
+    "tablesUsed": ["ProdBom_V"],
+    "columnsUsed": ["DW_Id", "PRODID", "LINENUM", "PRODLINETYPE", "BOMCONSUMP", "ITEMID", "BOMQTY", "CONSTANT", "ROUNDUP", "ROUNDUPQTY", "OPRNUM", "QTYBOMCALC", "REMAINBOMPHYSICAL", "QTYINVENTCALC", "RAWMATERIALDATE", "REMAININVENTPHYSICAL", "INVENTREFTYPE", "INVENTREFID", "UNITID", "QTYINVENTSTUP", "QTYBOMSTUP", "BOMID", "FORMULA", "BOMREFRECID", "BOMQTYSERIE", "ITEMROUTEID", "ITEMBOMID", "INVENTDIMID", "REQPOID", "REQPLANIDSCHED", "RAWMATERIALTIME", "SCRAPVAR", "SCRAPCONST", "CONSTANTRELEASED", "ENDCONSUMP", "ENDSCHEDCONSUMP", "PROJCATEGORYID", "ACTIVITYNUMBER", "DEFAULTDIMENSION", "PROJTRANSID", "PROJTRANSDATE", "PROJLINEPROPERTYID", "PROJCOSTPRICE", "PROJCOSTAMOUNT", "PROJSALESCURRENCYID", "PROJSALESPRICE", "PROJTAXGROUPID", "PROJTAXITEMGROUPID", "PROJID", "PROJSETSUBPRODTOCONSUMED", "PRICE_RU", "PRICEUNIT_RU", "LINEAMOUNT_RU", "PDSBASEVALUE", "PDSCWINVENTCALC", "PDSCWINVENTSTUP", "PDSCWQTY", "PDSCWREMAINFINANCIAL", "PDSCWREMAINPHYSICAL", "PDSINGREDIENTTYPE", "PDSINHERITCOPRODUCTBATCHATTRIB", "PDSINHERITCOPRODUCTSHELFLIFE", "PDSINHERITENDITEMBATCHATTRIB", "PDSINHERITENDITEMSHELFLIFE", "PMFFORMULAPCT", "PMFPCTENABLE", "PMFQTYWITHOUTYIELD", "PMFSCALABLE", "DATAAREAID", "RECVERSION", "PARTITION", "RECID", "DW_Batch", "DW_SourceCode", "DW_TimeStamp"],
+    "dataSource": {
+      "server": "usmplpwdbs02.rndsystems.com",
+      "database": "JetAxDwh"
+    },
+    "description": "Retrieves production bill of materials data (BOM lines) for all raw materials. Filters company 'rdsi' with non-zero remaining physical component quantities."
+  },
+  {
+    "queryName": "REQITEMTABLE_V",
+    "sqlStatement": "SELECT [AUTHORIZATIONTIMEFENCE], [CALENDARDAYSPRODUCTION], [CALENDARDAYSPURCHASE],\n  [CALENDARDAYSTRANSFER], [CAPACITYTIMEFENCE], [COVFIELDSACTIVE], [COVINVENTDIMID],\n  [COVPERIOD], [COVRULE], [COVTIMEFENCE], [DATAAREAID], [EXPLOSIONTIMEFENCE],\n  [INVENTLOCATIONIDREQMAIN], [ITEMCOVFIELDSACTIVE], [ITEMID], [LEADTIMEPRODUCTION],\n  [LEADTIMEPRODUCTIONACTIVE], [LEADTIMEPURCHASE], [LEADTIMEPURCHASEACTIVE],\n  [LEADTIMETRANSFER], [LEADTIMETRANSFERACTIVE], [LOCKINGTIMEFENCE],\n  [MAXINVENTONHAND], [MAXNEGATIVEDAYS], [MAXPOSITIVEDAYS], [MAXSAFETYKEYID],\n  [MININVENTONHAND], [MINSAFETYKEYID], [MINSAFETYPERIOD], [MINSATISFY],\n  [ONHANDACTIVE], [ONHANDCONSUMPTIONSTRATEGY], [PARTITION], [PMFPLANNINGITEMID],\n  [PMFPLANPRIORITYCURRENT], [PMFPLANPRIORITYDATECHANGED], [PMFPLANPRIORITYDEFAULT],\n  [RECID], [RECVERSION], [REQGROUPID], [REQPOTYPE], [REQPOTYPEACTIVE],\n  [TIMEFENCEBACKREQUISITION], [TIMEFENCEFIELDSACTIVE], [VENDID]\nFROM [JetAxDwh].[dbo].[REQITEMTABLE_V]\nWHERE DATAAREAID='rdsi'",
+    "tablesUsed": ["REQITEMTABLE_V"],
+    "columnsUsed": ["AUTHORIZATIONTIMEFENCE", "CALENDARDAYSPRODUCTION", "CALENDARDAYSPURCHASE", "CALENDARDAYSTRANSFER", "CAPACITYTIMEFENCE", "COVFIELDSACTIVE", "COVINVENTDIMID", "COVPERIOD", "COVRULE", "COVTIMEFENCE", "DATAAREAID", "EXPLOSIONTIMEFENCE", "INVENTLOCATIONIDREQMAIN", "ITEMCOVFIELDSACTIVE", "ITEMID", "LEADTIMEPRODUCTION", "LEADTIMEPRODUCTIONACTIVE", "LEADTIMEPURCHASE", "LEADTIMEPURCHASEACTIVE", "LEADTIMETRANSFER", "LEADTIMETRANSFERACTIVE", "LOCKINGTIMEFENCE", "MAXINVENTONHAND", "MAXNEGATIVEDAYS", "MAXPOSITIVEDAYS", "MAXSAFETYKEYID", "MININVENTONHAND", "MINSAFETYKEYID", "MINSAFETYPERIOD", "MINSATISFY", "ONHANDACTIVE", "ONHANDCONSUMPTIONSTRATEGY", "PARTITION", "PMFPLANNINGITEMID", "PMFPLANPRIORITYCURRENT", "PMFPLANPRIORITYDATECHANGED", "PMFPLANPRIORITYDEFAULT", "RECID", "RECVERSION", "REQGROUPID", "REQPOTYPE", "REQPOTYPEACTIVE", "TIMEFENCEBACKREQUISITION", "TIMEFENCEFIELDSACTIVE", "VENDID"],
+    "dataSource": {
+      "server": "usmplpwdbs02.rndsystems.com",
+      "database": "JetAxDwh"
+    },
+    "description": "Retrieves planning parameters and coverage settings for items. Filters company 'rdsi'."
+  },
+  {
+    "queryName": "BOM Lines (AX)",
+    "sqlStatement": "SELECT BV.[BOMID] AS 'Parent Number', BV.[ITEMID] AS 'Line Part',\n  BV.[BOMQTY] AS 'BOM Lines Qty', BV.[OPRNUM] AS 'Oper. Num.',\n  BV.[UNITID] AS 'UOM', BV.[ITEMBOMID], BV.[DATAAREAID],\n  BVV.NAME, BVV.FROMDATE, BVV.FROMQTY,\n  CASE WHEN BVV.ACTIVE = 0 THEN 'No' WHEN BVV.ACTIVE = 1 THEN 'Yes' END AS 'ACTIVE',\n  BVV.RECID, BT.[ITEMGROUPID], H.PERSONNELNUMBER AS 'APPROVER',\n  BT.[SITEID] AS 'Site',\n  CASE WHEN BT.[APPROVED] = 0 THEN 'No' WHEN BT.[APPROVED] = 1 THEN 'Yes' END AS 'APPROVED',\n  IV.[Item Name] AS 'Product Name', H.[Employee Name] AS 'Approver Name',\n  CASE WHEN BV.BOMQTYSERIE = 0 THEN NULL ELSE BV.BOMQTY / BV.BOMQTYSERIE END AS 'Conversion Factor',\n  IV.[Item Type Description]\nFROM [JetAxDwh].[dbo].[Item_V] IV\nLEFT JOIN BOM_V BV ON BV.ITEMID = IV.[Item ID] AND BV.DATAAREAID = IV.Company\nLEFT JOIN BOMVERSION_V BVV ON BV.BOMID = BVV.BOMID AND BVV.DATAAREAID = BV.DATAAREAID\nLEFT JOIN BOMTABLE_V BT ON BV.BOMID = BT.BOMID AND BT.DATAAREAID = BV.DATAAREAID\nLEFT JOIN HCMWORKER_V H ON H.RECID = BT.APPROVER\nWHERE IV.Company = 'rdsi'\n  AND BV.ITEMID <> 'NULL'\nORDER BY BV.[BOMID]",
+    "tablesUsed": ["Item_V", "BOM_V", "BOMVERSION_V", "BOMTABLE_V", "HCMWORKER_V"],
+    "columnsUsed": ["BOMID", "ITEMID", "BOMQTY", "OPRNUM", "UNITID", "ITEMBOMID", "DATAAREAID", "NAME", "FROMDATE", "FROMQTY", "ACTIVE", "RECID", "ITEMGROUPID", "PERSONNELNUMBER", "SITEID", "APPROVED", "Item Name", "Item ID", "Company", "Item Type Description", "BOMQTYSERIE", "Employee Name"],
+    "dataSource": {
+      "server": "usmplpwdbs02.rndsystems.com",
+      "database": "JetAxDwh"
+    },
+    "description": "Returns detailed bill of materials structure with BOM versions, approvers, and approval status. Filters company 'rdsi' and item types equal to 'Item'. Includes conversion factors and site information."
+  },
+  {
+    "queryName": "CI_Item",
+    "sqlStatement": "SELECT DISTINCT [ItemCode], [PurchaseUnitOfMeasure], [StandardUnitOfMeasure]\nFROM [CI_Item]",
+    "tablesUsed": ["CI_Item"],
+    "columnsUsed": ["ItemCode", "PurchaseUnitOfMeasure", "StandardUnitOfMeasure"],
+    "dataSource": {
+      "server": "ussjopwdbs02.ad.bio-techne.com",
+      "database": "MAS90CBS"
+    },
+    "description": "Retrieves item codes with purchase and standard units of measure from accounting system. Removes duplicate ItemCode records."
+  },
+  {
+    "queryName": "IM_ItemTransactionHistory",
+    "sqlStatement": "SELECT [ItemCode], [WarehouseCode], [TransactionDate], [TransactionCode],\n  ABS(Sum([TransactionQty])) as 'Transaction Quantity'\nFROM [MAS90CBS].[dbo].[IM_ItemTransactionHistory]\nWHERE [TransactionCode] = 'BI'\n  AND WarehouseCode IN('000','C01','C02','C03','SPW','200')\n  AND TransactionDate >= DATEADD(DAY, -365, GETDATE())\n  AND TransactionQty <> 0\nGROUP BY [ItemCode], [WarehouseCode], [TransactionDate], [TransactionCode]",
+    "tablesUsed": ["IM_ItemTransactionHistory"],
+    "columnsUsed": ["ItemCode", "WarehouseCode", "TransactionDate", "TransactionCode", "TransactionQty"],
+    "dataSource": {
+      "server": "ussjopwdbs02.ad.bio-techne.com",
+      "database": "MAS90CBS"
+    },
+    "description": "Aggregates inventory transactions (opening balance 'BI' code) from past 365 days for specified warehouses. Groups by item, warehouse, and date with absolute sum of quantities."
+  },
+  {
+    "queryName": "IM_ItemWarehouse",
+    "sqlStatement": "SELECT [ItemCode], [WarehouseCode], [ReorderMethod], [QuantityOnHand]\nFROM [MAS90CBS].[dbo].[IM_ItemWarehouse]\nWHERE [QuantityOnHand] > 0",
+    "tablesUsed": ["IM_ItemWarehouse"],
+    "columnsUsed": ["ItemCode", "WarehouseCode", "ReorderMethod", "QuantityOnHand"],
+    "dataSource": {
+      "server": "ussjopwdbs02.ad.bio-techne.com",
+      "database": "MAS90CBS"
+    },
+    "description": "Retrieves warehouse inventory balances and reorder methods from accounting system. Filters only items with positive on-hand quantities."
+  },
+  {
+    "queryName": "Base Kit and Others",
+    "sqlStatement": "WITH BaseKitList AS (SELECT 'LUHM000' AS Kit UNION ALL SELECT 'LMPM000' UNION ALL SELECT 'LOBM000' UNION ALL SELECT 'LHSCM000' UNION ALL SELECT 'LBAM000' UNION ALL SELECT 'LBHS000' UNION ALL SELECT 'LHK000' UNION ALL SELECT 'LTGM00' UNION ALL SELECT 'LUXLM000B' UNION ALL SELECT 'LMET000' UNION ALL SELECT 'LMXL000' UNION ALL SELECT 'LNHPXL000' UNION ALL SELECT 'LHION000' UNION ALL SELECT 'LHTM000' UNION ALL SELECT 'LMXTRAINING' UNION ALL SELECT 'NONALX01' UNION ALL SELECT 'NONALX02' UNION ALL SELECT 'NONALX03'),\nItemList AS (SELECT DISTINCT IV.[Item ID] AS ItemID FROM [JetAxDwh].[dbo].[Item_V] IV WHERE IV.[Company] = 'rdsi' AND IV.[Buyer Group ID] = 'P19' AND [Supply Strategy Code] = 'MTS' AND NOT EXISTS (SELECT 1 FROM BaseKitList B WHERE B.Kit = IV.[Item ID]) AND EXISTS (SELECT 1 FROM [JetAxDwh].[dbo].[BOM_V] BV WHERE BV.[BOMID] = IV.[Item ID] AND BV.[DATAAREAID] = 'rdsi')),\nKitScope AS (SELECT Kit AS KitID FROM BaseKitList UNION SELECT ItemID AS KitID FROM ItemList),\nAllLuminexKits AS (SELECT DISTINCT KS.KitID AS Kit, IV.[Item Name] AS KitName FROM KitScope KS LEFT JOIN [JetAxDwh].[dbo].[Item_V] IV ON IV.[Item ID] = KS.KitID AND IV.[Company] = 'rdsi'),\nKitClassified AS (SELECT K.Kit, K.KitName, CASE WHEN EXISTS (SELECT 1 FROM BaseKitList B WHERE B.Kit = K.Kit) THEN 'Base Kit' ELSE 'Other' END AS [Kit Type] FROM AllLuminexKits K),\nBomRows AS (SELECT KC.Kit AS [Parent Number], KC.KitName AS [NAME], KC.[Kit Type], BV.[ITEMID] AS [Line Part], IVLP.[Item Name] AS [Product Name], BV.[BOMQTY] AS [BOM Lines Qty], CASE WHEN BV.[BOMQTYSERIE] = 0 THEN NULL ELSE BV.[BOMQTY] * 1.0 / BV.[BOMQTYSERIE] END AS [Conversion Factor], IVLP.PDSBESTBEFORE AS [Best Before Period (Days)], IVLP.[Shelf Life Days] AS [Shelf Life (Days)] FROM KitClassified KC LEFT JOIN [JetAxDwh].[dbo].[BOM_V] BV ON BV.[BOMID] = KC.Kit AND BV.[DATAAREAID] = 'rdsi' LEFT JOIN [JetAxDwh].[dbo].[BOMVERSION_V] BVV ON BVV.[BOMID] = BV.[BOMID] AND BVV.[DATAAREAID] = BV.[DATAAREAID] LEFT JOIN [JetAxDwh].[dbo].[BOMTABLE_V] BT ON BT.[BOMID] = BV.[BOMID] AND BT.[DATAAREAID] = BV.[DATAAREAID] AND BT.[SITEID] IN ('BT','BT-OPS') INNER JOIN [JetAxDwh].[dbo].[Item_V] IVLP ON IVLP.[Item ID] = BV.[ITEMID] AND IVLP.[Company] = 'rdsi' AND IVLP.[Buyer Group ID] = 'P19' WHERE BV.[ITEMID] IS NOT NULL),\nNoBomKits AS (SELECT KC.Kit AS [Parent Number], KC.KitName AS [NAME], KC.[Kit Type], KC.Kit AS [Line Part], KC.KitName AS [Product Name], CAST(1 AS decimal(18,6)) AS [BOM Lines Qty], CAST(1 AS decimal(18,6)) AS [Conversion Factor], IVLP.PDSBESTBEFORE AS [Best Before Period (Days)], IVLP.[Shelf Life Days] AS [Shelf Life (Days)] FROM KitClassified KC INNER JOIN [JetAxDwh].[dbo].[Item_V] IVLP ON IVLP.[Item ID] = KC.Kit AND IVLP.[Company] = 'rdsi' AND IVLP.[Buyer Group ID] = 'P19' WHERE KC.Kit <> 'LHK000' AND NOT EXISTS (SELECT 1 FROM [JetAxDwh].[dbo].[BOM_V] BV WHERE BV.[BOMID] = KC.Kit AND BV.[DATAAREAID] = 'rdsi')),\nLHK000_Hardcoded AS (SELECT 'LHK000' AS [Parent Number], (SELECT TOP 1 KitName FROM KitClassified WHERE Kit = 'LHK000') AS [NAME], 'Base Kit' AS [Kit Type], v.[Line Part], IVLP.[Item Name] AS [Product Name], CAST(1 AS decimal(18,6)) AS [BOM Lines Qty], CAST(1 AS decimal(18,6)) AS [Conversion Factor], IVLP.PDSBESTBEFORE AS [Best Before Period (Days)], IVLP.[Shelf Life Days] AS [Shelf Life (Days)] FROM (VALUES ('895970'), ('894311'), ('895986'), ('895529'), ('892525')) v([Line Part]) INNER JOIN [JetAxDwh].[dbo].[Item_V] IVLP ON IVLP.[Item ID] = v.[Line Part] AND IVLP.[Company] = 'rdsi' AND IVLP.[Buyer Group ID] = 'P19'),\nScreeningStandards_Hardcoded AS (...) SELECT * FROM BomRows UNION ALL SELECT * FROM NoBomKits UNION ALL SELECT * FROM LHK000_Hardcoded UNION ALL SELECT * FROM ScreeningStandards_Hardcoded ORDER BY [Parent Number], [Line Part]",
+    "tablesUsed": ["Item_V", "BOM_V", "BOMVERSION_V", "BOMTABLE_V"],
+    "columnsUsed": ["Item ID", "Company", "Buyer Group ID", "Supply Strategy Code", "BOMID", "DATAAREAID", "Item Name", "ITEMID", "BOMQTY", "BOMQTYSERIE", "PDSBESTBEFORE", "Shelf Life Days", "SITEID"],
+    "dataSource": {
+      "server": "usmplpwdbs02.rndsystems.com",
+      "database": "JetAxDwh"
+    },
+    "description": "Complex BOM structure query that defines base kits (hardcoded list) and other kits (derived from Buyer Group P19 with MTS supply strategy). Returns complete kit-component mapping with hardcoded exceptions for LHK000 and Screening Standards. Orders by parent and line part."
+  },
+  {
+    "queryName": "Sales Line",
+    "sqlStatement": "SELECT A.*, B.[Buyer Group ID]\nFROM (SELECT * FROM [JetAxDwh].[dbo].[SALESLINE_V]\n  WHERE [DATAAREAID] = 'rdsi'\n  AND [SALESSTATUS] = 1) A\nINNER JOIN (SELECT [Item ID], [Buyer Group ID] FROM [JetAxDwh].[dbo].[Item_V]\n  WHERE Company = 'rdsi') B\n  ON A.ITEMID = B.[Item ID]",
+    "tablesUsed": ["SALESLINE_V", "Item_V"],
+    "columnsUsed": ["DATAAREAID", "SALESSTATUS", "ITEMID", "Item ID", "Buyer Group ID", "Company"],
+    "dataSource": {
+      "server": "usmplpwdbs02.rndsystems.com",
+      "database": "JetAxDwh"
+    },
+    "description": "Retrieves open sales line details (SALESSTATUS = 1) for company 'rdsi' with item buyer group information joined from item master."
+  },
+  {
+    "queryName": "POs (FG Consumables Planning)",
+    "sqlStatement": "SELECT d.[PurchaseOrderNo], d.[LineKey], d.[LineSeqNo], d.[ItemCode],\n  d.[ItemCodeDesc], d.[RequiredDate], d.[UnitOfMeasure],\n  d.[QuantityOrdered] * d.[UnitOfMeasureConvFactor] AS 'QuantityOrdered',\n  d.[QuantityReceived] * d.[UnitOfMeasureConvFactor] AS 'QuantityReceived',\n  d.[UDF_COMMITDATE], d.[UDF_REVISEDDELIVERYDATE],\n  (d.QuantityOrdered - d.QuantityReceived) * d.[UnitOfMeasureConvFactor] AS 'Open Bal',\n  h.WarehouseCode,\n  CASE WHEN d.ItemCode LIKE '*%' THEN 'Indirect' ELSE 'Direct' END AS 'Direct/Indirect'\nFROM [MAS90CBS].[dbo].[PO_PurchaseOrderDetail] d\nLEFT JOIN PO_PurchaseOrderHeader h ON d.PurchaseOrderNo = h.PurchaseOrderNo\nWHERE (d.QuantityOrdered - d.QuantityReceived) > 0",
+    "tablesUsed": ["PO_PurchaseOrderDetail", "PO_PurchaseOrderHeader"],
+    "columnsUsed": ["PurchaseOrderNo", "LineKey", "LineSeqNo", "ItemCode", "ItemCodeDesc", "RequiredDate", "UnitOfMeasure", "QuantityOrdered", "QuantityReceived", "UnitOfMeasureConvFactor", "UDF_COMMITDATE", "UDF_REVISEDDELIVERYDATE", "WarehouseCode"],
+    "dataSource": {
+      "server": "ussjopwdbs02.ad.bio-techne.com",
+      "database": "MAS90CBS"
+    },
+    "description": "Retrieves open purchase order details with open balance calculations. Converts quantities using UnitOfMeasureConvFactor. Classifies items as Direct/Indirect based on ItemCode pattern."
+  },
+  {
+    "queryName": "Match Set",
+    "sqlStatement": "WITH ComponentRef AS (SELECT * FROM (VALUES ('Standards', 1, 2), ('Controls', 1, 2), ('Biotin cocktail', 1, 1), ('Streptavidin-PE', 1, 1), ... ) v([Component Category], [IsMatchSet], [QtyPerKit])),\nComponent_Category AS (SELECT CASE WHEN [Item Name] LIKE '%Standard Cocktail 1%' THEN 'Standards' ... END AS [Component Category], [Buyer Group ID], [Item Group ID], [Item Group Name], [Item ID], [Item Name] FROM [dbo].[Item_V] WHERE [Company] = 'rdsi')\nSELECT CASE WHEN r.IsMatchSet = 1 THEN 'Match Set Component' WHEN r.IsMatchSet = 0 THEN 'Not Match Set Component' ELSE 'Not Match Set Component' END AS [Match Set?], c.[Item Group ID], c.[Item Group Name], c.[Item ID], c.[Item Name], c.[Component Category], r.[QtyPerKit]\nFROM Component_Category c\nLEFT JOIN ComponentRef r ON r.[Component Category] = c.[Component Category]\nWHERE r.[Component Category] IS NOT NULL",
+    "tablesUsed": ["Item_V"],
+    "columnsUsed": ["Item Name", "Company", "Buyer Group ID", "Item Group ID", "Item Group Name", "Item ID"],
+    "dataSource": {
+      "server": "usmplpwdbs02.rndsystems.com",
+      "database": "JetAxDwh"
+    },
+    "description": "Classifies inventory items into match set components using pattern matching on item names. Maps items to component categories (Standards, Controls, Biotin cocktail, etc.) and indicates match set status with quantity per kit."
+  }
+]

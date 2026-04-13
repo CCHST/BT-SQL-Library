@@ -94,9 +94,9 @@
 		#tagSearch {
 			order: 1;
 			margin-left: auto;
-			width: 300px;
-			max-width: 300px;
-			min-width: 150px;
+			width: 340px;
+			max-width: 340px;
+			min-width: 180px;
 			flex-shrink: 1;
 			border: none;
 			border-bottom: 2px solid #d4d4d4;
@@ -113,7 +113,7 @@
 
 		.grid {
 			display: grid;
-			grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+			grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
 			gap: 1.5rem;
 			max-width: 1300px;
 			margin: 0 auto;
@@ -145,9 +145,10 @@
 			font-size: 1.15rem;
 		}
 
-		.card p {
-			line-height: 1.4;
-			margin-bottom: 0.6rem;
+		.card p,
+		.card div {
+			line-height: 1.45;
+			margin-bottom: 0.7rem;
 			color: #333;
 		}
 
@@ -170,11 +171,18 @@
 			margin-top: 0.8rem;
 		}
 
-		.sql-details summary {
+		.sql-details summary,
+		.columns-details summary {
 			cursor: pointer;
 			color: #0072CE;
 			font-weight: 600;
 			outline: none;
+			list-style: none;
+		}
+
+		.sql-details summary::-webkit-details-marker,
+		.columns-details summary::-webkit-details-marker {
+			display: none;
 		}
 
 		.sql-box {
@@ -187,9 +195,26 @@
 			margin-top: 0.6rem;
 			color: #333;
 			font-size: 0.85rem;
-			max-height: 300px;
+			max-height: 320px;
 			overflow-y: auto;
 			border: 1px solid #e2e8f0;
+		}
+
+		.column-badges {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 0.45rem;
+			margin-top: 0.6rem;
+		}
+
+		.column-badges span {
+			display: inline-block;
+			background: #f3f6f9;
+			color: #333;
+			padding: 0.3rem 0.55rem;
+			border-radius: 8px;
+			font-size: 0.78rem;
+			border: 1px solid #dbe3ea;
 		}
 
 		.empty-message,
@@ -231,7 +256,7 @@
 			<div class="container">
 				<header>
 					<h2>SQL Queries</h2>
-					<p>Filter by category or search by tag, table, column, or description.</p>
+					<p>Search by category, tag, table, column, or description.</p>
 				</header>
 
 				<div class="filters">
@@ -243,7 +268,7 @@
 					<button class="pill" data-filter="Item Master">Item Master</button>
 					<button class="pill" data-filter="General">General</button>
 
-					<input id="tagSearch" type="text" placeholder="Filter by tag or keyword 🔍" />
+					<input id="tagSearch" type="text" placeholder="Search by tag, table, column, or keyword 🔍" />
 				</div>
 
 				<div class="grid" id="queryGrid">
@@ -294,9 +319,10 @@
 		let allQueries = [];
 
 		async function loadManifest() {
-			const res = await fetch('data/manifest.json');
+			const path = 'data/manifest.json';
+			const res = await fetch(path);
 			if (!res.ok) {
-				throw new Error('Failed to load data/manifest.json');
+				throw new Error(`Failed to load ${path} (status ${res.status})`);
 			}
 			return await res.json();
 		}
@@ -306,9 +332,10 @@
 
 			const results = await Promise.all(
 				files.map(async (file) => {
-					const res = await fetch(`data/${file}`);
+					const path = `data/${file}`;
+					const res = await fetch(path);
 					if (!res.ok) {
-						throw new Error(`Failed to load data/${file}`);
+						throw new Error(`Failed to load ${path} (status ${res.status})`);
 					}
 					const json = await res.json();
 					return Array.isArray(json) ? json : [];
@@ -390,7 +417,6 @@
 			pushIf(text.includes('externalitemid'), 'mapping');
 			pushIf(text.includes('approval') || text.includes('approver'), 'approval');
 			pushIf(text.includes('commodity'), 'commodity');
-			pushIf(text.includes('sql'), 'sql');
 
 			if (tags.size === 0) tags.add('sql');
 
@@ -427,10 +453,14 @@
 				const server = query.data_source.server || 'Unknown server';
 				const tags = query.tags;
 				const tablesText = query.tables_used.length ? query.tables_used.join(', ') : 'N/A';
-				const columnsPreview = query.columns_used.length
-					? query.columns_used.slice(0, 6).join(', ')
-					: 'N/A';
+
+				const previewColumns = query.columns_used.length
+					? query.columns_used.slice(0, 6)
+					: [];
 				const moreColumnsCount = Math.max(query.columns_used.length - 6, 0);
+				const allColumnsHtml = query.columns_used.length
+					? query.columns_used.map(col => `<span>${escapeHtml(col)}</span>`).join('')
+					: '<span>N/A</span>';
 
 				const article = document.createElement('article');
 				article.className = 'card';
@@ -458,10 +488,24 @@
 
 					<p><strong>Description:</strong> ${escapeHtml(query.description)}</p>
 					<p class="meta-line"><strong>Tables:</strong> ${escapeHtml(tablesText)}</p>
-					<p class="meta-line">
-						<strong>Columns:</strong> ${escapeHtml(columnsPreview)}
-						${moreColumnsCount > 0 ? `<span class="small-note"> (+${moreColumnsCount} more)</span>` : ''}
-					</p>
+
+					<div class="meta-line">
+						<strong>Columns:</strong>
+						<span>${escapeHtml(previewColumns.join(', ') || 'N/A')}</span>
+						${moreColumnsCount > 0 ? `
+							<details class="columns-details" style="margin-top:0.45rem;">
+								<summary>View all columns (+${moreColumnsCount} more)</summary>
+								<div class="column-badges">
+									${allColumnsHtml}
+								</div>
+							</details>
+						` : previewColumns.length ? `
+							<div class="column-badges">
+								${allColumnsHtml}
+							</div>
+						` : ''}
+					</div>
+
 					<p class="meta-line"><strong>Complexity:</strong> ${escapeHtml(query.complexity)}</p>
 					<p class="meta-line"><strong>Server:</strong> ${escapeHtml(server)}</p>
 
@@ -523,7 +567,7 @@
 			applyFilters();
 		} catch (err) {
 			console.error(err);
-			grid.innerHTML = `<div class="error-message">Failed to load query data. Check your data/manifest.json path and JSON files.</div>`;
+			grid.innerHTML = `<div class="error-message">Failed to load query data: ${escapeHtml(err.message)}</div>`;
 		}
 	})();
 	</script>

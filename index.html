@@ -294,9 +294,9 @@
 		let allQueries = [];
 
 		async function loadManifest() {
-			const res = await fetch('data queries/manifest.json');
+			const res = await fetch('data/manifest.json');
 			if (!res.ok) {
-				throw new Error('Failed to load data queries/manifest.json');
+				throw new Error('Failed to load data/manifest.json');
 			}
 			return await res.json();
 		}
@@ -306,7 +306,7 @@
 
 			const results = await Promise.all(
 				files.map(async (file) => {
-					const res = await fetch(`data queries/${file}`);
+					const res = await fetch(`data/${file}`);
 					if (!res.ok) {
 						throw new Error(`Failed to load data/${file}`);
 					}
@@ -523,7 +523,7 @@
 			applyFilters();
 		} catch (err) {
 			console.error(err);
-			grid.innerHTML = `<div class="error-message">Failed to load query data. Check your data queries/manifest.json path and JSON files.</div>`;
+			grid.innerHTML = `<div class="error-message">Failed to load query data. Check your data/manifest.json path and JSON files.</div>`;
 		}
 	})();
 	</script>

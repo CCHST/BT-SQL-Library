@@ -459,13 +459,21 @@
 		function normalizeQuery(query, index) {
 			return {
 				id: query.id || `query-${index + 1}`,
-				query_name: query.query_name || 'Untitled Query',
+				query_name: query.query_name || query.queryName || 'Untitled Query',
 				category: inferCategory(query),
 				tags: inferTags(query),
-				data_source: query.data_source || {},
-				sql_statement: query.sql_statement || '',
-				tables_used: Array.isArray(query.tables_used) ? query.tables_used : [],
-				columns_used: Array.isArray(query.columns_used) ? query.columns_used : [],
+				data_source: query.data_source || query.dataSource || {},
+				sql_statement: query.sql_statement || query.sqlStatement || '',
+				tables_used: Array.isArray(query.tables_used)
+					? query.tables_used
+					: Array.isArray(query.tablesUsed)
+						? query.tablesUsed
+						: [],
+				columns_used: Array.isArray(query.columns_used)
+					? query.columns_used
+					: Array.isArray(query.columnsUsed)
+						? query.columnsUsed
+						: [],
 				description: query.description || 'No description provided.'
 			};
 		}

@@ -256,7 +256,7 @@
 			<div class="container">
 				<header>
 					<h2>SQL Queries</h2>
-					<p>Search by category, tag, table, column, or description.</p>
+					<p>Search by column 🔍</p>
 				</header>
 
 				<div class="filters">
@@ -466,16 +466,9 @@
 				article.className = 'card';
 				article.dataset.category = query.category;
 				article.dataset.tags = tags.join(',').toLowerCase();
-				article.dataset.search = [
-					query.query_name,
-					query.description,
-					query.category,
-					db,
-					server,
-					...tags,
-					...query.tables_used,
-					...query.columns_used
-				].join(' ').toLowerCase();
+				article.dataset.search = query.columns_used
+				.map(col => col.replace(/[_\s]/g, '').toLowerCase())
+				.join(' ');
 
 				article.innerHTML = `
 					<h3>${escapeHtml(query.query_name)}</h3>
@@ -521,7 +514,9 @@
 
 		function applyFilters() {
 			const active = document.querySelector('.filters .pill.active')?.dataset.filter || '*';
-			const q = (search.value || '').trim().toLowerCase();
+			const q = (search.value || '')
+			.replace(/[_\s]/g, '')
+			.toLowerCase();
 			const cards = document.querySelectorAll('#queryGrid .card');
 
 			let visibleCount = 0;

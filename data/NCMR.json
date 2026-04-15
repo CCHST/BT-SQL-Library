@@ -1,0 +1,46 @@
+[
+  {
+    "queryName": "CBL",
+    "sqlStatement": "SELECT DISTINCT\n    a.PurchaseOrderNo,\n    a.PurchaseOrderDate,\n    a.LastReceiptDate,\n    a.VendorNo,\n    a.PurchaseName,\n    b.ItemCode,\n    b.ItemCodeDesc,\n    b.QuantityOrdered,\n    b.QuantityReceived,\n    b.UnitCost,\n    b.ExtensionAmt\nFROM MAS90CBL.dbo.PO_PurchaseOrderHeader a\nLEFT JOIN MAS90CBL.dbo.PO_PurchaseOrderDetail b\n    ON a.PurchaseOrderNo = b.PurchaseOrderNo\nWHERE a.PurchaseOrderDate >= '2018-01-01'",
+    "tablesUsed": ["PO_PurchaseOrderHeader", "PO_PurchaseOrderDetail"],
+    "columnsUsed": ["PurchaseOrderNo", "PurchaseOrderDate", "LastReceiptDate", "VendorNo", "PurchaseName", "ItemCode", "ItemCodeDesc", "QuantityOrdered", "QuantityReceived", "UnitCost", "ExtensionAmt"],
+    "dataSource": {
+      "server": "ussjopwdbs02.ad.bio-techne.com",
+      "database": "MAS90CBL"
+    },
+    "description": "Retrieves purchase order headers and details from the Canada entity. Uses DISTINCT to eliminate duplicate rows and filters for orders since January 1, 2018."
+  },
+  {
+    "queryName": "CBS",
+    "sqlStatement": "SELECT DISTINCT\n    a.PurchaseOrderNo,\n    a.PurchaseOrderDate,\n    a.LastReceiptDate,\n    a.VendorNo,\n    a.PurchaseName,\n    b.ItemCode,\n    b.ItemCodeDesc,\n    b.QuantityOrdered,\n    b.QuantityReceived,\n    b.UnitCost,\n    b.ExtensionAmt\nFROM MAS90CBS.dbo.PO_PurchaseOrderHeader a\nLEFT JOIN MAS90CBS.dbo.PO_PurchaseOrderDetail b\n    ON a.PurchaseOrderNo = b.PurchaseOrderNo\nWHERE a.PurchaseOrderDate >= '2018-01-01'",
+    "tablesUsed": ["PO_PurchaseOrderHeader", "PO_PurchaseOrderDetail"],
+    "columnsUsed": ["PurchaseOrderNo", "PurchaseOrderDate", "LastReceiptDate", "VendorNo", "PurchaseName", "ItemCode", "ItemCodeDesc", "QuantityOrdered", "QuantityReceived", "UnitCost", "ExtensionAmt"],
+    "dataSource": {
+      "server": "ussjopwdbs02.ad.bio-techne.com",
+      "database": "MAS90CBS"
+    },
+    "description": "Retrieves purchase order headers and details from the San Jose entity. Uses DISTINCT to eliminate duplicate rows and filters for orders since January 1, 2018."
+  },
+  {
+    "queryName": "PSC",
+    "sqlStatement": "SELECT DISTINCT\n    a.PurchaseOrderNo,\n    a.PurchaseOrderDate,\n    a.LastReceiptDate,\n    a.VendorNo,\n    a.PurchaseName,\n    b.ItemCode,\n    b.ItemCodeDesc,\n    b.QuantityOrdered,\n    b.QuantityReceived,\n    b.UnitCost,\n    b.ExtensionAmt\nFROM MAS90PSC.dbo.PO_PurchaseOrderHeader a\nLEFT JOIN MAS90PSC.dbo.PO_PurchaseOrderDetail b\n    ON a.PurchaseOrderNo = b.PurchaseOrderNo\nWHERE a.PurchaseOrderDate >= '2018-01-01'",
+    "tablesUsed": ["PO_PurchaseOrderHeader", "PO_PurchaseOrderDetail"],
+    "columnsUsed": ["PurchaseOrderNo", "PurchaseOrderDate", "LastReceiptDate", "VendorNo", "PurchaseName", "ItemCode", "ItemCodeDesc", "QuantityOrdered", "QuantityReceived", "UnitCost", "ExtensionAmt"],
+    "dataSource": {
+      "server": "ussjopwdbs02.ad.bio-techne.com",
+      "database": "MAS90PSC"
+    },
+    "description": "Retrieves purchase order headers and details from the Wallingford entity. Uses DISTINCT to eliminate duplicate rows and filters for orders since January 1, 2018."
+  },
+  {
+    "queryName": "IM_ItemTransactionHistory",
+    "sqlStatement": "SELECT *\nFROM [MAS90CBS].[dbo].[IM_ItemTransactionHistory]\nWHERE TransactionDate >= '2018-01-01'\n\nUNION\n\nSELECT *\nFROM [MAS90CBL].[dbo].[IM_ItemTransactionHistory]\nWHERE TransactionDate >= '2018-01-01'\n\nUNION\n\nSELECT *\nFROM [MAS90PSC].[dbo].[IM_ItemTransactionHistory]\nWHERE TransactionDate >= '2018-01-01'\n\nORDER BY TransactionDate DESC",
+    "tablesUsed": ["IM_ItemTransactionHistory (MAS90CBS)", "IM_ItemTransactionHistory (MAS90CBL)", "IM_ItemTransactionHistory (MAS90PSC)"],
+    "columnsUsed": ["All columns (SELECT *)"],
+    "dataSource": {
+      "server": "ussjopwdbs02.ad.bio-techne.com",
+      "database": "master (federated query across MAS90CBS, MAS90CBL, MAS90PSC)"
+    },
+    "description": "Combines item transaction history from all three entities (San Jose, Canada, and Wallingford) using UNION. Filters for transactions since January 1, 2018 and sorts by transaction date in descending order."
+  }
+]
